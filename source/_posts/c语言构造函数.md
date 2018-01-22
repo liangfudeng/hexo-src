@@ -5,13 +5,14 @@ tags:
   - c语言
 ---
 说起这个属性，要从fio的vpp说起，引擎的注册函数fio_libaio_register与反注册函数fio_libaio_unregister都没有其他函数调用，而fio又没有以动态库的形式将这两个函数供别的地方使用,但是这两个函数有宏定义fio_init和fio_exit来修饰。这个两个个宏定义为：
-```
+{% codeblock lang:c %}
 #define fio_init __attribute__((constructor))  
 #define fio_exit __attribute__((destructor))
-```
+{% endcodeblock %}
+
 以如下构造函数为例,这是vpp中的代码：
 
-```
+{% codeblock lang:c %}
 #define VLIB_DECLARE_INIT_FUNCTION(x, tag)                      \
 vlib_init_function_t * _VLIB_INIT_FUNCTION_SYMBOL (x, tag) = x; \
 static void __vlib_add_##tag##_function_##x (void)              \
@@ -25,9 +26,9 @@ static void __vlib_add_##tag##_function_##x (void)              \
   vm->tag##_function_registrations = &_vlib_init_function;      \
  _vlib_init_function.f = &x;                                    \
 }
-```
+{% endcodeblock %}
 这个两个属性是gcc提供的属性，在dpdk中也有体现。若函数被设定为constructor属性，则该函数会在main（）函数执行之前被自动的执行。若函数被设定为destructor属性，则该函数会在main（）函数执行之后或者exit（）被调用后被自动的执行。通过如下测试代码，能更加清晰地认识到这两个属性的作用：
-```
+{% codeblock lang:c %}
 #include <stdio.h>  
 #include <stdlib.h>  
 void __attribute__((constructor)) con_func()  
@@ -43,7 +44,7 @@ int main()
     printf("main func..\n");  
     return 0;  
 }
-```
+{% endcodeblock %}
 结果：
 ```
 befor main: constructor is called..  
