@@ -66,7 +66,7 @@
 
 
 
-  <meta name="keywords" content="网络转发,令牌桶算法,多核限速,DPDK," />
+  <meta name="keywords" content="网络转发,DPDK,DPVS," />
 
 
 
@@ -77,24 +77,18 @@
 
 
 
-<meta name="description" content="QoS（Quality of Service，服务质量）指一个网络能够利用各种基础技术，为指定的网络通信提供更好的服务能力, 是网络的一种安全机制， 是用来解决网络延迟和阻塞等问题的一种技术。其中限速就是一种QOS机制，目前限速算法中用得比较多的是令牌桶算法。本文不打算套路目前有哪些限速算法，而主要套路基于DPDK的软件架构，如何实现多核限速算法，并获取到较高的性能。 令牌桶算法介绍简介所谓的令牌">
-<meta name="keywords" content="网络转发,令牌桶算法,多核限速,DPDK">
+<meta name="description" content="本文仅仅概述dpvs二三层协议栈的处理流程，只会对重点函数和流程分析，以避免刚刚接触DPVS的同学被这些细节扰乱视听。后面的章节将会针对于某个某块进行重点分析。废话不多说，开始吧。 接dpvs源码分析（一）之启动过程，我们知道，lcore_job_recv_fwd是首先被调动的函数：1234567891011121314151617181920212223242526272829303132333">
+<meta name="keywords" content="网络转发,DPDK,DPVS">
 <meta property="og:type" content="article">
-<meta property="og:title" content="基于DPDK的多核令牌桶算法">
-<meta property="og:url" content="http://blog.mycise.com/2018/01/11/令牌桶算法算法/index.html">
+<meta property="og:title" content="dpvs源码分析（二）之链路层">
+<meta property="og:url" content="http://blog.mycise.com/2018/01/18/dpvs源码分析（二）之协议栈处理流程/index.html">
 <meta property="og:site_name" content="独孤酒剑">
-<meta property="og:description" content="QoS（Quality of Service，服务质量）指一个网络能够利用各种基础技术，为指定的网络通信提供更好的服务能力, 是网络的一种安全机制， 是用来解决网络延迟和阻塞等问题的一种技术。其中限速就是一种QOS机制，目前限速算法中用得比较多的是令牌桶算法。本文不打算套路目前有哪些限速算法，而主要套路基于DPDK的软件架构，如何实现多核限速算法，并获取到较高的性能。 令牌桶算法介绍简介所谓的令牌">
+<meta property="og:description" content="本文仅仅概述dpvs二三层协议栈的处理流程，只会对重点函数和流程分析，以避免刚刚接触DPVS的同学被这些细节扰乱视听。后面的章节将会针对于某个某块进行重点分析。废话不多说，开始吧。 接dpvs源码分析（一）之启动过程，我们知道，lcore_job_recv_fwd是首先被调动的函数：1234567891011121314151617181920212223242526272829303132333">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:image" content="http://blog.mycise.com/images/lingpaitong.PNG">
-<meta property="og:image" content="http://blog.mycise.com/images/lingpaitong1.JPG">
-<meta property="og:image" content="http://blog.mycise.com/images/lingpaitong2.JPG">
-<meta property="og:image" content="http://blog.mycise.com/images/lptfp.PNG">
-<meta property="og:image" content="http://blog.mycise.com/images/lingpaitong3.jpg">
-<meta property="og:updated_time" content="2018-01-15T06:07:48.272Z">
+<meta property="og:updated_time" content="2018-01-25T03:25:33.165Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="基于DPDK的多核令牌桶算法">
-<meta name="twitter:description" content="QoS（Quality of Service，服务质量）指一个网络能够利用各种基础技术，为指定的网络通信提供更好的服务能力, 是网络的一种安全机制， 是用来解决网络延迟和阻塞等问题的一种技术。其中限速就是一种QOS机制，目前限速算法中用得比较多的是令牌桶算法。本文不打算套路目前有哪些限速算法，而主要套路基于DPDK的软件架构，如何实现多核限速算法，并获取到较高的性能。 令牌桶算法介绍简介所谓的令牌">
-<meta name="twitter:image" content="http://blog.mycise.com/images/lingpaitong.PNG">
+<meta name="twitter:title" content="dpvs源码分析（二）之链路层">
+<meta name="twitter:description" content="本文仅仅概述dpvs二三层协议栈的处理流程，只会对重点函数和流程分析，以避免刚刚接触DPVS的同学被这些细节扰乱视听。后面的章节将会针对于某个某块进行重点分析。废话不多说，开始吧。 接dpvs源码分析（一）之启动过程，我们知道，lcore_job_recv_fwd是首先被调动的函数：1234567891011121314151617181920212223242526272829303132333">
 
 
 
@@ -124,13 +118,13 @@
 
 
 
-  <link rel="canonical" href="http://blog.mycise.com/2018/01/11/令牌桶算法算法/"/>
+  <link rel="canonical" href="http://blog.mycise.com/2018/01/18/dpvs源码分析（二）之协议栈处理流程/"/>
 
 
 
 
 
-  <title>基于DPDK的多核令牌桶算法 | 独孤酒剑</title>
+  <title>dpvs源码分析（二）之链路层 | 独孤酒剑</title>
   
 
 
@@ -311,7 +305,7 @@
   
   
   <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://blog.mycise.com/2018/01/11/令牌桶算法算法/">
+    <link itemprop="mainEntityOfPage" href="http://blog.mycise.com/2018/01/18/dpvs源码分析（二）之协议栈处理流程/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="name" content="独孤酒剑">
@@ -328,7 +322,7 @@
 
         
         
-          <h1 class="post-title" itemprop="name headline">基于DPDK的多核令牌桶算法</h1>
+          <h1 class="post-title" itemprop="name headline">dpvs源码分析（二）之链路层</h1>
         
 
         <div class="post-meta">
@@ -340,8 +334,8 @@
               
                 <span class="post-meta-item-text">发表于</span>
               
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-11T16:35:16+08:00">
-                2018-01-11
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-01-18T16:52:00+08:00">
+                2018-01-18
               </time>
             
 
@@ -400,45 +394,11 @@
       
 
       
-        <p>QoS（Quality of Service，服务质量）指一个网络能够利用各种基础技术，为指定的网络通信提供更好的服务能力, 是网络的一种安全机制， 是用来解决网络延迟和阻塞等问题的一种技术。其中限速就是一种QOS机制，目前限速算法中用得比较多的是令牌桶算法。本文不打算套路目前有哪些限速算法，而主要套路基于DPDK的软件架构，如何实现多核限速算法，并获取到较高的性能。</p>
-<h1 id="令牌桶算法介绍"><a href="#令牌桶算法介绍" class="headerlink" title="令牌桶算法介绍"></a>令牌桶算法介绍</h1><h2 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h2><p>所谓的令牌桶算法，顾名思义，就是向一个桶中按照一定的速率放入令牌，如下图所示。当有需要限速的数据包通过的时候，依据数据报文的长度算出需要取走的令牌数N。如果桶中的令牌数量大于N，那么此数据包就顺利通过了限速测试。反之，此数据包就没有通过限速测试，于是就将报文进行丢弃处理（大多数情况下是如此，也可以进行其他处理，依赖用户程序的设计）。整个令牌桶算法的主要原理就是这样，是不是感觉很简单，详细分析将在下文介绍。<br><img src="/images/lingpaitong.PNG" width="800" height="700"></p>
-<h2 id="基于DPDK的实现"><a href="#基于DPDK的实现" class="headerlink" title="基于DPDK的实现"></a>基于DPDK的实现</h2><p>首先介绍下DPDK的两个函数，这也是在算法的实现中需要用到的两个函数，摘抄自DPDK官方文档：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">static uint64_t rte_get_timer_cycles(void )</span><br><span class="line">Get the number of cycles since boot from the default timer.</span><br><span class="line"></span><br><span class="line">static uint64_t rte_get_timer_hz(void)</span><br><span class="line">Get the number of cycles in one second for the default timer.</span><br></pre></td></tr></table></figure></p>
-<h3 id="放入令牌"><a href="#放入令牌" class="headerlink" title="放入令牌"></a>放入令牌</h3><p>在本设计中，以N = rte_get_timer_hz() 的速率向桶里面放令牌。也就是说，每秒放入一秒的时钟周期个数的令牌。的限速rate = 10000Bps，需要限速的包的大小为1500B。那么在处理该数据包，应该消耗多少令牌呢？利用小学数学应该可以算出，需要消耗<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">如果一秒内有一个包：</span><br><span class="line">N * (1500 / 10000) &lt; N 此时可以通过</span><br><span class="line">如果一秒内有7个包</span><br><span class="line">N * (1500*7 / 10000) &gt; N 那么第七个包将会被丢弃</span><br></pre></td></tr></table></figure></p>
-<h3 id="放入方式"><a href="#放入方式" class="headerlink" title="放入方式"></a>放入方式</h3><p>假设每秒应该放入N = rte_get_timer_hz() 个令牌</p>
-<ul>
-<li>方式1： 设置定时器，在定时器的回调函数中放入令牌。<ul>
-<li>解析： 可以利用dpdk的定时器，比如设置每1秒，call以下回调函数，放入令牌1 * N个令牌。</li>
-<li>缺陷1： 这种方式的问题在于，如果在这一秒钟内，如果前0.5秒的突发流量将令牌都消耗完了，那么后0.5秒的报文不就全部丢掉了。有人说，可以将这个间隔设置小一点啊，比入每1/1000秒放入N/1000个令牌。但是问题在于，这个间隔到底是多少好呢？</li>
-<li>缺陷2： 无法处理突发流量，原因见方式3。</li>
-</ul>
-</li>
-</ul>
-<ul>
-<li><p>方式2： 按时间间隔放入</p>
-<ul>
-<li>解析： 按时间间隔放入，假设当前报文和上一个报文的时间间隔为1ms秒，那么放入1/1000 * N 个令牌。这种方式的好处在于针对于每个数据包的处理前都会放入令牌，分散了令牌的放入。</li>
-<li>缺陷： 无法处理突发流量，原因见方式3。<img src="/images/lingpaitong1.JPG">
-</li>
-</ul>
-</li>
-<li><p>方式3： 改进方式2</p>
-<ul>
-<li>背景： 方式1和方式2都面临一个问题，如果有突发流量，那么可能在极短的时间内消耗全部的令牌，大量的流量被放行，从而对系统造成威胁。</li>
-<li>解析： 如果当出现丢包，那么在接下来的200us内的前64个报文都会被丢弃。对于200us和64这个值都是经验值，可以在真实场景中进行调优。</li>
-<li>缺陷： 这个方式降低了突发流量对系统的威胁，但是会对限速的准确性有一定的影响，通过测试可以证明。<img src="/images/lingpaitong2.JPG">
-</li>
-</ul>
-</li>
-</ul>
-<blockquote><p><strong> 方式2和方式3可以协作运行，比如用方式3先进行防攻击限速，然后再用方式2进行精确限速。</strong></p>
-</blockquote>
-<h3 id="多线程处理"><a href="#多线程处理" class="headerlink" title="多线程处理"></a>多线程处理</h3><p><strong> 多线程处理的基本思想，如下图所示：</strong></p>
-<ul>
-<li>一个全局令牌桶<br>  随着时间的推移，每次放入令牌仅仅放入全局令牌桶。为什么不放入线程令牌桶？假设需要限速的报文到了不同的线程，并且每个线程流量不同，那么对于每个线程放入令牌的数量就不得而知了。</li>
-<li>每个线程拥有独立的子令牌桶<br>  子令牌桶只消费令牌，不放入令牌。当子令牌桶的令牌不够时，从全局令牌桶索取令牌。</li>
-</ul>
-<img src="/images/lptfp.PNG">
-<p><strong> 详细流程 </strong><br>下面将用流程图的形式来描述多线程令牌桶的实现。在最后会介绍这种令牌桶算法可能存在的问题。<br><img src="/images/lingpaitong3.jpg"></p>
+        <p>本文仅仅概述dpvs二三层协议栈的处理流程，只会对重点函数和流程分析，以避免刚刚接触DPVS的同学被这些细节扰乱视听。后面的章节将会针对于某个某块进行重点分析。废话不多说，开始吧。</p>
+<p>接<strong><a href="/2018/01/15/dpvs源码分析（一）之启动过程/" title="dpvs源码分析（一）之启动过程">dpvs源码分析（一）之启动过程</a></strong>，我们知道，lcore_job_recv_fwd是首先被调动的函数：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">lcore_job_recv_fwd</span><span class="params">(<span class="keyword">void</span> *arg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i, j;</span><br><span class="line">    <span class="keyword">portid_t</span> pid;</span><br><span class="line">    <span class="keyword">lcoreid_t</span> cid;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">netif_queue_conf</span> *<span class="title">qconf</span>;</span></span><br><span class="line"></span><br><span class="line">    cid = rte_lcore_id();</span><br><span class="line">    assert(LCORE_ID_ANY != cid);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; lcore_conf[lcore2index[cid]].nports; i++) &#123;</span><br><span class="line">        pid = lcore_conf[lcore2index[cid]].pqs[i].id;</span><br><span class="line">        assert(pid &lt; rte_eth_dev_count());</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (j = <span class="number">0</span>; j &lt; lcore_conf[lcore2index[cid]].pqs[i].nrxq; j++) &#123;</span><br><span class="line">            qconf = &amp;lcore_conf[lcore2index[cid]].pqs[i].rxqs[j];</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 从arp_ring获取arp报文，最后调用lcore_process_packets 处理，所以直接看lcore_process_packets这个函数就好了。</span></span><br><span class="line">            lcore_process_arp_ring(qconf,cid);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 从网卡收包，存放于qconf-&gt;mbufs 结构体重，len为包的数量</span></span><br><span class="line">            qconf-&gt;len = netif_rx_burst(pid, qconf);</span><br><span class="line">            <span class="comment">//统计</span></span><br><span class="line">            lcore_stats_burst(&amp;lcore_stats[cid], qconf-&gt;len);</span><br><span class="line">            </span><br><span class="line">            <span class="comment">//处理数据报文，</span></span><br><span class="line">            <span class="comment">//mbuf会在lcore_process_packets被释放</span></span><br><span class="line">            lcore_process_packets(qconf, qconf-&gt;mbufs, cid, qconf-&gt;len, <span class="number">1</span>);</span><br><span class="line">            </span><br><span class="line">            <span class="comment">//将报文发送给Linux kernel</span></span><br><span class="line">            kni_send2kern_loop(pid, qconf);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">lcore_process_packets</span><span class="params">(struct netif_queue_conf *qconf, struct rte_mbuf **mbufs,</span></span></span><br><span class="line"><span class="function"><span class="params">                      <span class="keyword">lcoreid_t</span> cid, <span class="keyword">uint16_t</span> count, <span class="keyword">bool</span> pretetch)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* prefetch packets </span></span><br><span class="line"><span class="comment">    预先将数据包从内存加载到cache，这样有可能加快运行速度*/</span></span><br><span class="line">    <span class="keyword">if</span> (pretetch) &#123;</span><br><span class="line">        <span class="keyword">for</span> (t = <span class="number">0</span>; t &lt; qconf-&gt;len &amp;&amp; t &lt; NETIF_PKT_PREFETCH_OFFSET; t++)</span><br><span class="line">            rte_prefetch0(rte_pktmbuf_mtod(qconf-&gt;mbufs[t], <span class="keyword">void</span> *));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* L2 filter */</span></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; count; i++) &#123;</span><br><span class="line">        ...</span><br><span class="line">        <span class="comment">/*校验mac地址，如果和物理设备的mac地址一样，被设置为RTE_TYPE_HOST。不一样则被设置为ETH_PKT_OTHERHOST*/</span></span><br><span class="line">        <span class="comment">/* reuse mbuf.packet_type, it was RTE_PTYPE_XXX */</span></span><br><span class="line">        mbuf-&gt;packet_type = eth_type_parse(eth_hdr, dev);</span><br><span class="line"></span><br><span class="line">        <span class="comment">/*</span></span><br><span class="line"><span class="comment">         * 如果通过dpip命令设置了设备forward2kni on，那么所有的报文都会复制一份给kernel</span></span><br><span class="line"><span class="comment">         * 所有数据包复制一份通过kni发送给kernel， 原有mbuf不变。</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="keyword">if</span> (dev-&gt;flag &amp; NETIF_PORT_FLAG_FORWARD2KNI) &#123;</span><br><span class="line">            <span class="keyword">if</span> (likely(<span class="literal">NULL</span> != (mbuf_copied = mbuf_copy(mbuf,</span><br><span class="line">                                pktmbuf_pool[dev-&gt;socket]))))</span><br><span class="line">                kni_ingress(mbuf_copied, dev, qconf);</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">                RTE_LOG(WARNING, NETIF, <span class="string">"%s: Failed to copy mbuf\n"</span>,</span><br><span class="line">                        __func__);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">/*</span></span><br><span class="line"><span class="comment">         * handle VLAN</span></span><br><span class="line"><span class="comment">         * if HW offload vlan strip, it's still need vlan module</span></span><br><span class="line"><span class="comment">         * to act as VLAN filter.</span></span><br><span class="line"><span class="comment">         * vlan_rcv会通过vlanid找到对应的dev，然后将dev id复制给mbuf-&gt;port_id</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="keyword">if</span> (eth_hdr-&gt;ether_type == htons(ETH_P_8021Q) ||</span><br><span class="line">            mbuf-&gt;ol_flags &amp; PKT_RX_VLAN_STRIPPED) &#123;</span><br><span class="line">            <span class="keyword">if</span> (vlan_rcv(mbuf, netif_port_get(mbuf-&gt;port)) != EDPVS_OK) &#123;</span><br><span class="line">                rte_pktmbuf_free(mbuf);</span><br><span class="line">                lcore_stats[cid].dropped++;</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">/*通过port id找到对应的dev设备*/</span></span><br><span class="line">            dev = netif_port_get(mbuf-&gt;port);</span><br><span class="line">            <span class="keyword">if</span> (unlikely(!dev)) &#123;</span><br><span class="line">                rte_pktmbuf_free(mbuf);</span><br><span class="line">                lcore_stats[cid].dropped++;</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">/*获取二层头*/</span></span><br><span class="line">            eth_hdr = rte_pktmbuf_mtod(mbuf, struct ether_hdr *);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">/* handler should free mbuf */</span></span><br><span class="line">        netif_deliver_mbuf(mbuf, eth_hdr-&gt;ether_type, dev, qconf,</span><br><span class="line">                           (dev-&gt;flag &amp; NETIF_PORT_FLAG_FORWARD2KNI) ? <span class="literal">true</span>:<span class="literal">false</span>,</span><br><span class="line">                           cid, pkts_from_ring);</span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*上文用到了vlan_rcv这里对vlan_rcv做解析*/</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">vlan_rcv</span><span class="params">(struct rte_mbuf *mbuf, struct netif_port *real_dev)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// 剥离VLAN tag</span></span><br><span class="line">    err = vlan_untag_mbuf(mbuf);</span><br><span class="line">    <span class="keyword">if</span> (unlikely(err != EDPVS_OK))</span><br><span class="line">        <span class="keyword">return</span> err;</span><br><span class="line">    <span class="comment">// 依据VLAN tag找到对应的VLAN设备</span></span><br><span class="line">    dev = vlan_find_dev(real_dev, htons(ETH_P_8021Q),</span><br><span class="line">                        mbuf_vlan_tag_get_id(mbuf));</span><br><span class="line">    mbuf-&gt;port = dev-&gt;id;</span><br><span class="line">    <span class="keyword">if</span> (unlikely(mbuf-&gt;packet_type == ETH_PKT_OTHERHOST)) &#123;</span><br><span class="line">		<span class="comment">/*这里通过目的地址判断，包是不是发送给vlan的。*/</span></span><br><span class="line">        <span class="keyword">if</span> (eth_addr_equal(&amp;ehdr-&gt;d_addr, &amp;dev-&gt;addr))</span><br><span class="line">            mbuf-&gt;packet_type = ETH_PKT_HOST<span class="comment">/*如果是ETH_PKT_OTHERHOST报文会被丢弃*/</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>前面对vlan神马的都处理了，接下来就是二层报文的处理了：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">int</span> <span class="title">netif_deliver_mbuf</span><span class="params">(struct rte_mbuf *mbuf,</span></span></span><br><span class="line"><span class="function"><span class="params">                                     <span class="keyword">uint16_t</span> eth_type,</span></span></span><br><span class="line"><span class="function"><span class="params">                                     struct netif_port *dev,</span></span></span><br><span class="line"><span class="function"><span class="params">                                     struct netif_queue_conf *qconf,</span></span></span><br><span class="line"><span class="function"><span class="params">                                     <span class="keyword">bool</span> forward2kni,</span></span></span><br><span class="line"><span class="function"><span class="params">                                     <span class="keyword">lcoreid_t</span> cid,</span></span></span><br><span class="line"><span class="function"><span class="params">                                     <span class="keyword">bool</span> pkts_from_ring)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    pkt_type注册见下文，这里通过eth_type获取ptk_type</span><br><span class="line">    其他协议，都会送给linux kernel</span><br><span class="line">    pt = pkt_type_get(eth_type, dev);</span><br><span class="line">    <span class="keyword">if</span> (!forward2kni &amp;&amp; <span class="literal">NULL</span> == pt) &#123;</span><br><span class="line">    	<span class="comment">/*通过kni，发送给linux kernel*/</span></span><br><span class="line">        kni_ingress(mbuf, dev, qconf);</span><br><span class="line">        <span class="keyword">return</span> EDPVS_OK;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*clone arp pkt to every queue*/</span></span><br><span class="line">    <span class="keyword">if</span> (pt-&gt;type == rte_cpu_to_be_16(ETHER_TYPE_ARP) &amp;&amp; !pkts_from_ring<span class="comment">/*arp_ring里的报文，肯定不能再入ring了。*/</span>) &#123;</span><br><span class="line">       <span class="comment">/*将arp报文clone到每个队列，每个core维护自己的arp表现*/</span></span><br><span class="line">       ...</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">   <span class="comment">/*Remove len bytes at the beginning of an mbuf. 移除二层头*/</span></span><br><span class="line">    <span class="keyword">if</span> (unlikely(<span class="literal">NULL</span> == rte_pktmbuf_adj(mbuf, <span class="keyword">sizeof</span>(struct ether_hdr))))</span><br><span class="line">        <span class="keyword">return</span> EDPVS_INVPKT;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*在这里就开始处理上层协议了，目前只会处理ip和arp，也只注册了这两种*/</span></span><br><span class="line">    err = pt-&gt;func(mbuf, dev);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (err == EDPVS_KNICONTINUE) &#123;</span><br><span class="line">        <span class="keyword">if</span> (pkts_from_ring) &#123;</span><br><span class="line">        	<span class="comment">/*pkt_from_ring为arp_ring过来的报文</span></span><br><span class="line"><span class="comment">        	* arp_ring过来的报文不再发给linux kernel，因此需要free mubf</span></span><br><span class="line"><span class="comment">        	*/</span></span><br><span class="line">            rte_pktmbuf_free(mbuf);</span><br><span class="line">            <span class="keyword">return</span> EDPVS_OK;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (!forward2kni &amp;&amp; likely(<span class="literal">NULL</span> != rte_pktmbuf_prepend(mbuf,  (mbuf-&gt;data_off - data_off))))</span><br><span class="line">        	<span class="comment">// 发送给linux kernel</span></span><br><span class="line">            kni_ingress(mbuf, dev, qconf);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> EDPVS_OK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>不同类型的报文，注册不同的处理函数。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">pkt_type</span> <span class="title">ip4_pkt_type</span> = &#123;</span></span><br><span class="line">    <span class="comment">//.type       = rte_cpu_to_be_16(ETHER_TYPE_IPv4),</span></span><br><span class="line">    .func       = ipv4_rcv,</span><br><span class="line">    .port       = <span class="literal">NULL</span>,</span><br><span class="line">&#125;;</span><br><span class="line">ip4_pkt_type.type = htons(ETHER_TYPE_IPv4);</span><br><span class="line"></span><br><span class="line"><span class="keyword">static</span> <span class="class"><span class="keyword">struct</span> <span class="title">pkt_type</span> <span class="title">arp_pkt_type</span> = &#123;</span></span><br><span class="line">    <span class="comment">//.type       = rte_cpu_to_be_16(ETHER_TYPE_ARP),</span></span><br><span class="line">    .func       = neigh_resolve_input,</span><br><span class="line">    .port       = <span class="literal">NULL</span>,</span><br><span class="line">&#125;;</span><br><span class="line">arp_pkt_type.type = rte_cpu_to_be_16(ETHER_TYPE_ARP);</span><br><span class="line"></span><br></pre></td></tr></table></figure><br>目前只有ETHER_TYPE_ARP和ETHER_TYPE_IPv4被注册，也就是说dpvs协议栈目前仅仅会对这两种协议进行处理。其余的协议会通过kni传递个linux kernel。</p>
 
       
     </div>
@@ -487,11 +447,9 @@
           
             <a href="/tags/网络转发/" rel="tag"># 网络转发</a>
           
-            <a href="/tags/令牌桶算法/" rel="tag"># 令牌桶算法</a>
-          
-            <a href="/tags/多核限速/" rel="tag"># 多核限速</a>
-          
             <a href="/tags/DPDK/" rel="tag"># DPDK</a>
+          
+            <a href="/tags/DPVS/" rel="tag"># DPVS</a>
           
         </div>
       
@@ -504,8 +462,8 @@
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
-              <a href="/2018/01/10/c语言构造函数/" rel="next" title="c语言构造函数">
-                <i class="fa fa-chevron-left"></i> c语言构造函数
+              <a href="/2018/01/15/dpvs源码分析（一）之启动过程/" rel="next" title="dpvs源码分析（一）之启动过程">
+                <i class="fa fa-chevron-left"></i> dpvs源码分析（一）之启动过程
               </a>
             
           </div>
@@ -514,8 +472,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2018/01/15/dpvs源码分析（一）之启动过程/" rel="prev" title="dpvs源码分析（一）之启动过程">
-                dpvs源码分析（一）之启动过程 <i class="fa fa-chevron-right"></i>
+              <a href="/2018/01/19/makefile_赋值运算符/" rel="prev" title="makefile中= := ?= +=">
+                makefile中= := ?= += <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -568,17 +526,8 @@
       
 
       
-        <ul class="sidebar-nav motion-element">
-          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
-            文章目录
-          </li>
-          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
-            站点概览
-          </li>
-        </ul>
-      
 
-      <section class="site-overview-wrap sidebar-panel">
+      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -642,22 +591,6 @@
         </div>
       </section>
 
-      
-      <!--noindex-->
-        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
-          <div class="post-toc">
-
-            
-              
-            
-
-            
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#令牌桶算法介绍"><span class="nav-number">1.</span> <span class="nav-text">令牌桶算法介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#简介"><span class="nav-number">1.1.</span> <span class="nav-text">简介</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基于DPDK的实现"><span class="nav-number">1.2.</span> <span class="nav-text">基于DPDK的实现</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#放入令牌"><span class="nav-number">1.2.1.</span> <span class="nav-text">放入令牌</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#放入方式"><span class="nav-number">1.2.2.</span> <span class="nav-text">放入方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#多线程处理"><span class="nav-number">1.2.3.</span> <span class="nav-text">多线程处理</span></a></li></ol></li></ol></li></ol></div>
-            
-
-          </div>
-        </section>
-      <!--/noindex-->
       
 
       
