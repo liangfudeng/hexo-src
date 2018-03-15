@@ -66,7 +66,7 @@
 
 
 
-  <meta name="keywords" content="Hexo, NexT" />
+  <meta name="keywords" content="container_of,linux,链表," />
 
 
 
@@ -77,16 +77,18 @@
 
 
 
-<meta name="description" content="分享在学习工作过程中的感悟">
-<meta property="og:type" content="website">
-<meta property="og:title" content="独孤酒剑">
-<meta property="og:url" content="http://blog.mycise.com/categories/备忘录/index.html">
+<meta name="description" content="linux 内核链表的实现有段代码比较有意思，这里记录一下。 背景当在阅读遍历链表这个宏定义时，可能会对container_of有些许疑惑。12345678910111213141516171819202122232425262728293031323334353637/**     * list_for_each_entry  -   iterate over list of given typ">
+<meta name="keywords" content="container_of,linux,链表">
+<meta property="og:type" content="article">
+<meta property="og:title" content="container_of">
+<meta property="og:url" content="http://blog.mycise.com/2018/03/08/container_of/index.html">
 <meta property="og:site_name" content="独孤酒剑">
-<meta property="og:description" content="分享在学习工作过程中的感悟">
+<meta property="og:description" content="linux 内核链表的实现有段代码比较有意思，这里记录一下。 背景当在阅读遍历链表这个宏定义时，可能会对container_of有些许疑惑。12345678910111213141516171819202122232425262728293031323334353637/**     * list_for_each_entry  -   iterate over list of given typ">
 <meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-03-08T08:29:54.025Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="独孤酒剑">
-<meta name="twitter:description" content="分享在学习工作过程中的感悟">
+<meta name="twitter:title" content="container_of">
+<meta name="twitter:description" content="linux 内核链表的实现有段代码比较有意思，这里记录一下。 背景当在阅读遍历链表这个宏定义时，可能会对container_of有些许疑惑。12345678910111213141516171819202122232425262728293031323334353637/**     * list_for_each_entry  -   iterate over list of given typ">
 
 
 
@@ -116,13 +118,13 @@
 
 
 
-  <link rel="canonical" href="http://blog.mycise.com/categories/备忘录/"/>
+  <link rel="canonical" href="http://blog.mycise.com/2018/03/08/container_of/"/>
 
 
 
 
 
-  <title>分类: 备忘录 | 独孤酒剑</title>
+  <title>container_of | 独孤酒剑</title>
   
 
 
@@ -151,7 +153,7 @@
     
   
 
-  <div class="container sidebar-position-left ">
+  <div class="container sidebar-position-left page-post-detail">
     <div class="headband"></div>
 
     <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
@@ -289,139 +291,216 @@
           <div id="content" class="content">
             
 
+  <div id="posts" class="posts-expand">
+    
+
+  
+
   
   
   
-  <div class="post-block category">
-
-    <div id="posts" class="posts-collapse">
-      <div class="collection-title">
-        <h1>备忘录<small>分类</small>
-        </h1>
-      </div>
-
-      
-        
 
   <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://blog.mycise.com/2018/03/08/container_of/">
 
-      <h2 class="post-title">
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="独孤酒剑">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/title.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="独孤酒剑">
+    </span>
+
+    
+      <header class="post-header">
+
         
-            <a class="post-title-link" href="/2018/03/15/vim备忘录/" itemprop="url">
-              
-                <span itemprop="name">vim备忘录</span>
-              
-            </a>
         
-      </h2>
+          <h1 class="post-title" itemprop="name headline">container_of</h1>
+        
 
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2018-03-15T14:37:49+08:00"
-              content="2018-03-15" >
-          03-15
-        </time>
-      </div>
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-03-08T16:29:53+08:00">
+                2018-03-08
+              </time>
+            
 
-    </header>
-  </article>
+            
 
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/备忘录/" itemprop="url" rel="index">
+                    <span itemprop="name">备忘录</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
 
       
-        
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h2 class="post-title">
-        
-            <a class="post-title-link" href="/2018/03/08/container_of/" itemprop="url">
-              
-                <span itemprop="name">container_of</span>
-              
-            </a>
-        
-      </h2>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2018-03-08T16:29:53+08:00"
-              content="2018-03-08" >
-          03-08
-        </time>
-      </div>
-
-    </header>
-  </article>
-
+      
 
       
-        
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h2 class="post-title">
-        
-            <a class="post-title-link" href="/2018/02/06/vim自动格式化代码/" itemprop="url">
-              
-                <span itemprop="name">vim自动格式化代码</span>
-              
-            </a>
-        
-      </h2>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2018-02-06T11:29:19+08:00"
-              content="2018-02-06" >
-          02-06
-        </time>
-      </div>
-
-    </header>
-  </article>
-
-
-      
-        
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-    <header class="post-header">
-
-      <h2 class="post-title">
-        
-            <a class="post-title-link" href="/2018/01/19/makefile备忘录/" itemprop="url">
-              
-                <span itemprop="name">makefile备忘录</span>
-              
-            </a>
-        
-      </h2>
-
-      <div class="post-meta">
-        <time class="post-time" itemprop="dateCreated"
-              datetime="2018-01-19T16:21:43+08:00"
-              content="2018-01-19" >
-          01-19
-        </time>
-      </div>
-
-    </header>
-  </article>
-
+        <p>linux 内核链表的实现有段代码比较有意思，这里记录一下。</p>
+<h1 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h1><p>当在阅读遍历链表这个宏定义时，可能会对container_of有些许疑惑。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**    </span></span><br><span class="line"><span class="comment"> * list_for_each_entry  -   iterate over list of given type</span></span><br><span class="line"><span class="comment"> * @pos:    the type * to use as a loop cursor.</span></span><br><span class="line"><span class="comment"> * @head:   the head for your list.</span></span><br><span class="line"><span class="comment"> * @member: the name of the list_head within the struct.</span></span><br><span class="line"><span class="comment"> */</span>    </span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> list_for_each_entry(pos, head, member)              \</span></span><br><span class="line">    <span class="keyword">for</span> (pos = list_first_entry(head, typeof(*pos), member);    \</span><br><span class="line">         &amp;pos-&gt;member != (head);                    \</span><br><span class="line">         pos = list_next_entry(pos, member))</span><br><span class="line"></span><br><span class="line">		 </span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * list_entry - get the struct for this entry</span></span><br><span class="line"><span class="comment"> * @ptr:    the &amp;struct list_head pointer.</span></span><br><span class="line"><span class="comment"> * @type:   the type of the struct this is embedded in.</span></span><br><span class="line"><span class="comment"> * @member: the name of the list_head within the struct.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> list_entry(ptr, type, member) \</span></span><br><span class="line">    container_of(ptr, type, member)</span><br><span class="line"></span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * list_first_entry - get the first element from a list</span></span><br><span class="line"><span class="comment"> * @ptr:    the list head to take the element from.</span></span><br><span class="line"><span class="comment"> * @type:   the type of the struct this is embedded in.</span></span><br><span class="line"><span class="comment"> * @member: the name of the list_head within the struct.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * Note, that list is expected to be not empty.</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> list_first_entry(ptr, type, member) \</span></span><br><span class="line">    list_entry((ptr)-&gt;next, type, member)</span><br><span class="line"></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifndef</span> container_of</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">define</span> container_of(ptr, type, member) \</span></span><br><span class="line">    (type *)((<span class="keyword">char</span> *)(ptr) - (<span class="keyword">char</span> *) &amp;((type *)<span class="number">0</span>)-&gt;member)</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br></pre></td></tr></table></figure></p>
+<h1 id="解析"><a href="#解析" class="headerlink" title="解析"></a>解析</h1><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">define</span> container_of(ptr, type, member) \</span></span><br><span class="line">    (type *)((<span class="keyword">char</span> *)(ptr) - (<span class="keyword">char</span> *) &amp;((type *)<span class="number">0</span>)-&gt;member)</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span> </span></span><br></pre></td></tr></table></figure>
+<p>如上定义，为了更直观，定义如下数据结构：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> </span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> *<span class="title">next</span>;</span></span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> *<span class="title">prev</span>;</span> </span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">type</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">	<span class="keyword">int</span> a;</span><br><span class="line">	<span class="keyword">int</span> b;</span><br><span class="line">	<span class="class"><span class="keyword">struct</span> <span class="title">list_head</span> <span class="title">list</span>;</span></span><br><span class="line">	<span class="keyword">int</span> c;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure><br>那么对于container_of宏定义，三个参数分别对应：</p>
+<ul>
+<li>ptr: list的内存地址</li>
+<li>type: list所在数据结构的类型</li>
+<li>member： 是指list_head定义变量的名字，那么在这里就叫list</li>
+</ul>
+<p>这个宏定义的功能：通过member的地址和member的名字获取member所在数据结构的首地址。<br>首先： (char <em>) &amp;((type </em>)0)-&gt;member获取member在type类型中的偏移量<br>然后： 用ptr减去member在type类型数据结构中的偏移量，那么就得到了member所在type变量的首地址。</p>
+<p>最后举例：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">struct</span> <span class="title">A</span></span></span><br><span class="line"><span class="class">&#123;</span></span><br><span class="line">   <span class="keyword">int</span> a;</span><br><span class="line">   <span class="keyword">int</span> b;</span><br><span class="line">   <span class="keyword">int</span> c;</span><br><span class="line">&#125;;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">void</span>)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">A</span> <span class="title">x</span>;</span></span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">A</span> *<span class="title">y</span>;</span></span><br><span class="line">    x.a = <span class="number">1024</span>;</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"output1: %0x\n"</span>, &amp;(((struct A*)<span class="number">0</span>)-&gt;b)); </span><br><span class="line">    y = (struct A*) (((<span class="keyword">char</span>*)(&amp;x.b)) - ((<span class="keyword">char</span>*)&amp;(((struct A*)<span class="number">0</span>)-&gt;b)));</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"output2: %d\n"</span>, y-&gt;a); </span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"output3:%0x\n"</span>, &amp;x);</span><br><span class="line">    <span class="built_in">printf</span>(<span class="string">"output4:%0x\n"</span>, y);</span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">运行结果为：</span><br><span class="line">output1: <span class="number">4</span></span><br><span class="line">output2: <span class="number">1024</span></span><br><span class="line">output3:<span class="number">5b</span>22a1e0</span><br><span class="line">output4:<span class="number">5b</span>22a1e0</span><br></pre></td></tr></table></figure></p>
 
       
     </div>
+    
+    
+    
 
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechat.png" alt="独孤酒剑 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="独孤酒剑 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/container-of/" rel="tag"># container_of</a>
+          
+            <a href="/tags/linux/" rel="tag"># linux</a>
+          
+            <a href="/tags/链表/" rel="tag"># 链表</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/02/06/vim自动格式化代码/" rel="next" title="vim自动格式化代码">
+                <i class="fa fa-chevron-left"></i> vim自动格式化代码
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/03/15/vim备忘录/" rel="prev" title="vim备忘录">
+                vim备忘录 <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
   </div>
   
   
   
+  </article>
 
-  
 
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
 
 
           </div>
@@ -429,6 +508,10 @@
 
 
           
+
+  
+
+
 
         </div>
         
@@ -449,8 +532,17 @@
       
 
       
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
 
-      <section class="site-overview-wrap sidebar-panel sidebar-panel-active">
+      <section class="site-overview-wrap sidebar-panel">
         <div class="site-overview">
           <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
             
@@ -514,6 +606,22 @@
         </div>
       </section>
 
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#背景"><span class="nav-number">1.</span> <span class="nav-text">背景</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#解析"><span class="nav-number">2.</span> <span class="nav-text">解析</span></a></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
       
 
       
@@ -654,6 +762,10 @@
 
 
   
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
 
   
 

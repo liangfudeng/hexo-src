@@ -66,7 +66,7 @@
 
 
 
-  <meta name="keywords" content="网络转发,DPDK,DPVS," />
+  <meta name="keywords" content="网络转发,DPVS,DPDK," />
 
 
 
@@ -78,14 +78,14 @@
 
 
 <meta name="description" content="本文用于分析dpvs的启动流程，会对主要逻辑进行解析，忽略了一些边缘代码，比如配置文件解析，函数指针的注册等等。在阅读主逻辑的时候，如果有疑问的地方，再去看一些配置相关，初始化相关的代码。这样不仅高效而且不会那么枯燥。被忽略的代码将在本文中用…代替。 从main函数开始在src/mian.c文件中，main函数还是比较清晰的。首先是初始 -&amp;gt; 然后启动端口 -&amp;gt; 然后启动工作线程 -&amp;">
-<meta name="keywords" content="网络转发,DPDK,DPVS">
+<meta name="keywords" content="网络转发,DPVS,DPDK">
 <meta property="og:type" content="article">
 <meta property="og:title" content="dpvs源码分析（一）之启动过程">
 <meta property="og:url" content="http://blog.mycise.com/2018/01/15/dpvs源码分析（一）之启动过程/index.html">
 <meta property="og:site_name" content="独孤酒剑">
 <meta property="og:description" content="本文用于分析dpvs的启动流程，会对主要逻辑进行解析，忽略了一些边缘代码，比如配置文件解析，函数指针的注册等等。在阅读主逻辑的时候，如果有疑问的地方，再去看一些配置相关，初始化相关的代码。这样不仅高效而且不会那么枯燥。被忽略的代码将在本文中用…代替。 从main函数开始在src/mian.c文件中，main函数还是比较清晰的。首先是初始 -&amp;gt; 然后启动端口 -&amp;gt; 然后启动工作线程 -&amp;">
 <meta property="og:locale" content="zh-Hans">
-<meta property="og:updated_time" content="2018-01-18T03:23:32.568Z">
+<meta property="og:updated_time" content="2018-02-13T03:19:28.973Z">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="dpvs源码分析（一）之启动过程">
 <meta name="twitter:description" content="本文用于分析dpvs的启动流程，会对主要逻辑进行解析，忽略了一些边缘代码，比如配置文件解析，函数指针的注册等等。在阅读主逻辑的时候，如果有疑问的地方，再去看一些配置相关，初始化相关的代码。这样不仅高效而且不会那么枯燥。被忽略的代码将在本文中用…代替。 从main函数开始在src/mian.c文件中，main函数还是比较清晰的。首先是初始 -&amp;gt; 然后启动端口 -&amp;gt; 然后启动工作线程 -&amp;">
@@ -455,9 +455,9 @@
           
             <a href="/tags/网络转发/" rel="tag"># 网络转发</a>
           
-            <a href="/tags/DPDK/" rel="tag"># DPDK</a>
-          
             <a href="/tags/DPVS/" rel="tag"># DPVS</a>
+          
+            <a href="/tags/DPDK/" rel="tag"># DPDK</a>
           
         </div>
       
@@ -480,8 +480,8 @@
 
           <div class="post-nav-prev post-nav-item">
             
-              <a href="/2018/01/18/dpvs源码分析（二）之协议栈处理流程/" rel="prev" title="dpvs源码分析（二）之链路层">
-                dpvs源码分析（二）之链路层 <i class="fa fa-chevron-right"></i>
+              <a href="/2018/01/19/makefile备忘录/" rel="prev" title="makefile备忘录">
+                makefile备忘录 <i class="fa fa-chevron-right"></i>
               </a>
             
           </div>
@@ -563,7 +563,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">6</span>
+                  <span class="site-state-item-count">10</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -585,7 +585,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/tags/index.html">
-                  <span class="site-state-item-count">8</span>
+                  <span class="site-state-item-count">14</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>
