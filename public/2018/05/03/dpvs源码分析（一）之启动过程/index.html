@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+
+
+
+  
+
+
+<html class="theme-next gemini use-motion" lang="zh-Hans">
+<head>
+  <meta charset="UTF-8"/>
+<meta http-equiv="X-UA-Compatible" content="IE=edge" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
+<meta name="theme-color" content="#222">
+
+
+
+
+
+
+
+
+
+<meta http-equiv="Cache-Control" content="no-transform" />
+<meta http-equiv="Cache-Control" content="no-siteapp" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+  <link href="/lib/fancybox/source/jquery.fancybox.css?v=2.1.5" rel="stylesheet" type="text/css" />
+
+
+
+
+
+
+
+<link href="/lib/font-awesome/css/font-awesome.min.css?v=4.6.2" rel="stylesheet" type="text/css" />
+
+<link href="/css/main.css?v=5.1.4" rel="stylesheet" type="text/css" />
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png?v=5.1.4">
+
+
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png?v=5.1.4">
+
+
+  <link rel="mask-icon" href="/images/logo.svg?v=5.1.4" color="#222">
+
+
+
+
+
+  <meta name="keywords" content="网络转发,DPVS,DPDK," />
+
+
+
+
+
+  <link rel="alternate" href="/atom.xml" title="独孤酒剑" type="application/atom+xml" />
+
+
+
+
+
+
+<meta name="description" content="本文用于分析dpvs的启动流程，会对主要逻辑进行解析，忽略了一些边缘代码，比如配置文件解析，函数指针的注册等等。在阅读主逻辑的时候，如果有疑问的地方，再去看一些配置相关，初始化相关的代码。这样不仅高效而且不会那么枯燥。被忽略的代码将在本文中用…代替。 从main函数开始在src/mian.c文件中，main函数还是比较清晰的。首先是初始 -&amp;gt; 然后启动端口 -&amp;gt; 然后启动工作线程 -&amp;">
+<meta name="keywords" content="网络转发,DPVS,DPDK">
+<meta property="og:type" content="article">
+<meta property="og:title" content="dpvs源码分析（一）之启动过程">
+<meta property="og:url" content="http://blog.mycise.com/2018/05/03/dpvs源码分析（一）之启动过程/index.html">
+<meta property="og:site_name" content="独孤酒剑">
+<meta property="og:description" content="本文用于分析dpvs的启动流程，会对主要逻辑进行解析，忽略了一些边缘代码，比如配置文件解析，函数指针的注册等等。在阅读主逻辑的时候，如果有疑问的地方，再去看一些配置相关，初始化相关的代码。这样不仅高效而且不会那么枯燥。被忽略的代码将在本文中用…代替。 从main函数开始在src/mian.c文件中，main函数还是比较清晰的。首先是初始 -&amp;gt; 然后启动端口 -&amp;gt; 然后启动工作线程 -&amp;">
+<meta property="og:locale" content="zh-Hans">
+<meta property="og:updated_time" content="2018-05-03T14:36:49.687Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="dpvs源码分析（一）之启动过程">
+<meta name="twitter:description" content="本文用于分析dpvs的启动流程，会对主要逻辑进行解析，忽略了一些边缘代码，比如配置文件解析，函数指针的注册等等。在阅读主逻辑的时候，如果有疑问的地方，再去看一些配置相关，初始化相关的代码。这样不仅高效而且不会那么枯燥。被忽略的代码将在本文中用…代替。 从main函数开始在src/mian.c文件中，main函数还是比较清晰的。首先是初始 -&amp;gt; 然后启动端口 -&amp;gt; 然后启动工作线程 -&amp;">
+
+
+
+<script type="text/javascript" id="hexo.configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    root: '/',
+    scheme: 'Gemini',
+    version: '5.1.4',
+    sidebar: {"position":"left","display":"always","offset":12,"b2t":false,"scrollpercent":false,"onmobile":false},
+    fancybox: true,
+    tabs: true,
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},
+    duoshuo: {
+      userId: '0',
+      author: '博主'
+    },
+    algolia: {
+      applicationID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    }
+  };
+</script>
+
+
+
+  <link rel="canonical" href="http://blog.mycise.com/2018/05/03/dpvs源码分析（一）之启动过程/"/>
+
+
+
+
+
+  <title>dpvs源码分析（一）之启动过程 | 独孤酒剑</title>
+  
+
+
+
+
+
+  <script type="text/javascript">
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?7b92e67eed0ceffcd9dd41d4fd64dfa5";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
+
+  
+  
+    
+  
+
+  <div class="container sidebar-position-left page-post-detail">
+    <div class="headband"></div>
+
+    <header id="header" class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-wrapper">
+  <div class="site-meta ">
+    
+
+    <div class="custom-logo-site-title">
+      <a href="/"  class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">独孤酒剑</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+      
+        <p class="site-subtitle">快乐工作，认真生活</p>
+      
+  </div>
+
+  <div class="site-nav-toggle">
+    <button>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+      <span class="btn-bar"></span>
+    </button>
+  </div>
+</div>
+
+<nav class="site-nav">
+  
+
+  
+    <ul id="menu" class="menu">
+      
+        
+        <li class="menu-item menu-item-home">
+          <a href="/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-home"></i> <br />
+            
+            首页
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-about">
+          <a href="/about/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-user"></i> <br />
+            
+            关于
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-tags">
+          <a href="/tags/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-tags"></i> <br />
+            
+            标签
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-categories">
+          <a href="/categories/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-th"></i> <br />
+            
+            分类
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-archives">
+          <a href="/archives/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-archive"></i> <br />
+            
+            归档
+          </a>
+        </li>
+      
+        
+        <li class="menu-item menu-item-commonweal">
+          <a href="/404/" rel="section">
+            
+              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
+            
+            公益404
+          </a>
+        </li>
+      
+
+      
+        <li class="menu-item menu-item-search">
+          
+            <a href="javascript:;" class="popup-trigger">
+          
+            
+              <i class="menu-item-icon fa fa-search fa-fw"></i> <br />
+            
+            搜索
+          </a>
+        </li>
+      
+    </ul>
+  
+
+  
+    <div class="site-search">
+      
+  <div class="popup search-popup local-search-popup">
+  <div class="local-search-header clearfix">
+    <span class="search-icon">
+      <i class="fa fa-search"></i>
+    </span>
+    <span class="popup-btn-close">
+      <i class="fa fa-times-circle"></i>
+    </span>
+    <div class="local-search-input-wrapper">
+      <input autocomplete="off"
+             placeholder="搜索..." spellcheck="false"
+             type="text" id="local-search-input">
+    </div>
+  </div>
+  <div id="local-search-result"></div>
+</div>
+
+
+
+    </div>
+  
+</nav>
+
+
+
+ </div>
+    </header>
+
+    <main id="main" class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          <div id="content" class="content">
+            
+
+  <div id="posts" class="posts-expand">
+    
+
+  
+
+  
+  
+  
+
+  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
+  
+  
+  
+  <div class="post-block">
+    <link itemprop="mainEntityOfPage" href="http://blog.mycise.com/2018/05/03/dpvs源码分析（一）之启动过程/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="name" content="独孤酒剑">
+      <meta itemprop="description" content="">
+      <meta itemprop="image" content="/images/title.jpg">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="独孤酒剑">
+    </span>
+
+    
+      <header class="post-header">
+
+        
+        
+          <h1 class="post-title" itemprop="name headline">dpvs源码分析（一）之启动过程</h1>
+        
+
+        <div class="post-meta">
+          <span class="post-time">
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">发表于</span>
+              
+              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-03T22:28:37+08:00">
+                2018-05-03
+              </time>
+            
+
+            
+
+            
+          </span>
+
+          
+            <span class="post-category" >
+            
+              <span class="post-meta-divider">|</span>
+            
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              
+                <span class="post-meta-item-text">分类于</span>
+              
+              
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/网络转发/" itemprop="url" rel="index">
+                    <span itemprop="name">网络转发</span>
+                  </a>
+                </span>
+
+                
+                
+              
+            </span>
+          
+
+          
+            
+          
+
+          
+          
+
+          
+
+          
+
+          
+
+        </div>
+      </header>
+    
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+      
+
+      
+        <p>本文用于分析dpvs的启动流程，会对主要逻辑进行解析，忽略了一些边缘代码，比如配置文件解析，函数指针的注册等等。在阅读主逻辑的时候，如果有疑问的地方，再去看一些配置相关，初始化相关的代码。这样不仅高效而且不会那么枯燥。被忽略的代码将在本文中用…代替。</p>
+<h1 id="从main函数开始"><a href="#从main函数开始" class="headerlink" title="从main函数开始"></a>从main函数开始</h1><p>在src/mian.c文件中，main函数还是比较清晰的。首先是初始 -&gt; 然后启动端口 -&gt; 然后启动工作线程 -&gt; 主线程进入循环。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span> *argv[])</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">//各种初始化，暂不关心，用到的时候再看。</span></span><br><span class="line">    err = rte_eal_init(argc, argv);</span><br><span class="line">    <span class="keyword">if</span> (err &lt; <span class="number">0</span>)</span><br><span class="line">        rte_exit(EXIT_FAILURE, <span class="string">"Invalid EAL parameters\n"</span>);</span><br><span class="line">    argc -= err, argv += err;</span><br><span class="line"></span><br><span class="line">    rte_timer_subsystem_init();</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((err = cfgfile_init()) != EDPVS_OK)</span><br><span class="line">        rte_exit(EXIT_FAILURE, <span class="string">"Fail init configuration file: %s\n"</span>,</span><br><span class="line">                 dpvs_strerror(err));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((err = netif_virtual_devices_add()) != EDPVS_OK)</span><br><span class="line">        rte_exit(EXIT_FAILURE, <span class="string">"Fail add virtual devices:%s\n"</span>,</span><br><span class="line">                 dpvs_strerror(err));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((err = dpvs_timer_init()) != EDPVS_OK)</span><br><span class="line">        rte_exit(EXIT_FAILURE, <span class="string">"Fail init timer on %s\n"</span>, dpvs_strerror(err));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((err = tc_init()) != EDPVS_OK)</span><br><span class="line">        rte_exit(EXIT_FAILURE, <span class="string">"Fail to init traffic control: %s\n"</span>,</span><br><span class="line">                 dpvs_strerror(err));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((err = netif_init(<span class="literal">NULL</span>)) != EDPVS_OK)</span><br><span class="line">        rte_exit(EXIT_FAILURE, <span class="string">"Fail to init netif: %s\n"</span>, dpvs_strerror(err));</span><br><span class="line">    <span class="comment">/* Default lcore conf and port conf are used and may be changed here </span></span><br><span class="line"><span class="comment">     * with "netif_port_conf_update" and "netif_lcore_conf_set" */</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((err = ctrl_init()) != EDPVS_OK)</span><br><span class="line">        rte_exit(EXIT_FAILURE, <span class="string">"Fail to init ctrl plane: %s\n"</span>,</span><br><span class="line">                 dpvs_strerror(err));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((err = tc_ctrl_init()) != EDPVS_OK)</span><br><span class="line">        rte_exit(EXIT_FAILURE, <span class="string">"Fail to init tc control plane: %s\n"</span>,</span><br><span class="line">                 dpvs_strerror(err));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((err = vlan_init()) != EDPVS_OK)</span><br><span class="line">        rte_exit(EXIT_FAILURE, <span class="string">"Fail to init vlan: %s\n"</span>, dpvs_strerror(err));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((err = inet_init()) != EDPVS_OK)</span><br><span class="line">        rte_exit(EXIT_FAILURE, <span class="string">"Fail to init inet: %s\n"</span>, dpvs_strerror(err));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((err = sa_pool_init()) != EDPVS_OK)</span><br><span class="line">        rte_exit(EXIT_FAILURE, <span class="string">"Fail to init sa_pool: %s\n"</span>, dpvs_strerror(err));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((err = dp_vs_init()) != EDPVS_OK)</span><br><span class="line">        rte_exit(EXIT_FAILURE, <span class="string">"Fail to init ipvs: %s\n"</span>, dpvs_strerror(err));</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> ((err = netif_ctrl_init()) != EDPVS_OK)</span><br><span class="line">        rte_exit(EXIT_FAILURE, <span class="string">"Fail to init netif_ctrl: %s\n"</span>,</span><br><span class="line">                 dpvs_strerror(err));</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* config and start all available dpdk ports */</span></span><br><span class="line">    nports = rte_eth_dev_count();</span><br><span class="line">    <span class="keyword">for</span> (pid = <span class="number">0</span>; pid &lt; nports; pid++) &#123;</span><br><span class="line">        dev = netif_port_get(pid);</span><br><span class="line">        <span class="keyword">if</span> (!dev) &#123;</span><br><span class="line">            RTE_LOG(WARNING, DPVS, <span class="string">"port %d not found\n"</span>, pid);</span><br><span class="line">            <span class="keyword">continue</span>;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">//启动端口，配置端口。比如端口，队列，cpu的绑定等等。</span></span><br><span class="line">        err = netif_port_start(dev);</span><br><span class="line">        <span class="keyword">if</span> (err != EDPVS_OK)</span><br><span class="line">            RTE_LOG(WARNING, DPVS, <span class="string">"Start %s failed, skipping ...\n"</span>,</span><br><span class="line">                    dev-&gt;name);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* print port-queue-lcore relation */</span></span><br><span class="line">    netif_print_lcore_conf(pql_conf_buf, &amp;pql_conf_buf_len, <span class="literal">true</span>, <span class="number">0</span>);</span><br><span class="line">    RTE_LOG(INFO, DPVS, <span class="string">"\nport-queue-lcore relation array: \n%s\n"</span>,</span><br><span class="line">            pql_conf_buf);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* start data plane threads */</span></span><br><span class="line">    netif_lcore_start(); <span class="comment">//这里就是干活的线程，通过跟踪这个函数，最后会调用到netif_loop，即工作线程的loop</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/* write pid file */</span></span><br><span class="line">    <span class="keyword">if</span> (!pidfile_write(DPVS_PIDFILE, getpid()))</span><br><span class="line">        <span class="keyword">goto</span> end;</span><br><span class="line"></span><br><span class="line">    timer_sched_loop_interval = dpvs_timer_sched_interval_get();</span><br><span class="line">    assert(timer_sched_loop_interval &gt; <span class="number">0</span>);</span><br><span class="line"></span><br><span class="line">    dpvs_state_set(DPVS_STATE_NORMAL);</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* start control plane thread */</span></span><br><span class="line">    <span class="comment">// 主线程循环，用于处理ctrl plane等消息，这里占不讨论，后续文章再讨论。</span></span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line">        <span class="comment">/* reload configuations if reload flag is set */</span></span><br><span class="line">        try_reload();</span><br><span class="line">        <span class="comment">/* IPC loop */</span></span><br><span class="line">        sockopt_ctl(<span class="literal">NULL</span>);</span><br><span class="line">        <span class="comment">/* msg loop */</span></span><br><span class="line">        msg_master_process();</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* timer */</span></span><br><span class="line">        loop_cnt++;</span><br><span class="line">        <span class="keyword">if</span> (loop_cnt % timer_sched_loop_interval == <span class="number">0</span>)</span><br><span class="line">            rte_timer_manage();</span><br><span class="line">        <span class="comment">/* kni */</span></span><br><span class="line">        kni_process_on_master();</span><br><span class="line"></span><br><span class="line">        <span class="comment">/* process mac ring on master */</span></span><br><span class="line">        neigh_process_ring(<span class="literal">NULL</span>);</span><br><span class="line"> </span><br><span class="line">        <span class="comment">/* increase loop counts */</span></span><br><span class="line">        netif_update_master_loop_cnt();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">	...</span><br><span class="line"></span><br><span class="line">    <span class="built_in">exit</span>(<span class="number">0</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h1 id="DPVS-dataplane线程，即工作线程"><a href="#DPVS-dataplane线程，即工作线程" class="headerlink" title="DPVS dataplane线程，即工作线程"></a>DPVS dataplane线程，即工作线程</h1><p>DPVS在netif.c文件中static int netif_loop(void * dummy) 函数中收取，处理和发送数据包。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">netif_loop</span><span class="params">(<span class="keyword">void</span> *dummy)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">	...</span><br><span class="line"></span><br><span class="line">    try_isol_rxq_lcore_loop();</span><br><span class="line">    <span class="keyword">if</span> (<span class="number">0</span> == lcore_conf[lcore2index[cid]].nports) &#123;</span><br><span class="line">        RTE_LOG(INFO, NETIF, <span class="string">"[%s] Lcore %d has nothing to do.\n"</span>, __func__, cid);</span><br><span class="line">        <span class="keyword">return</span> EDPVS_IDLE;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/* 这里收包和处理CPU分离，是指收包的CPU和处理包的CPU不同，应该是为了增加网卡的吞吐能力吧。</span></span><br><span class="line"><span class="comment">    只有在/etc/dpvs.conf配置文件中配置了isol_rx_cpu_ids才会生效，暂时用不到，在后文中再来分析吧*/</span></span><br><span class="line"></span><br><span class="line">    list_for_each_entry(job, &amp;netif_lcore_jobs[NETIF_LCORE_JOB_INIT], <span class="built_in">list</span>) &#123;</span><br><span class="line">        do_lcore_job(job);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">/* NETIF_LCORE_JOB_INIT type类型暂时没有用到，忽略之*/</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="number">1</span>) &#123;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_RECORD_BIG_LOOP</span></span><br><span class="line">        loop_start = rte_get_timer_cycles();</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"><span class="comment">/* CONFIG_RECORD_BIG_LOOP给统计和debug用，暂不关心 */</span></span><br><span class="line"></span><br><span class="line">        lcore_stats[cid].lcore_loop++;</span><br><span class="line">        list_for_each_entry(job, &amp;netif_lcore_jobs[NETIF_LCORE_JOB_LOOP], <span class="built_in">list</span>) &#123;</span><br><span class="line">            do_lcore_job(job);</span><br><span class="line">        &#125;</span><br><span class="line">        ++netif_loop_tick[cid];</span><br><span class="line">        list_for_each_entry(job, &amp;netif_lcore_jobs[NETIF_LCORE_JOB_SLOW], <span class="built_in">list</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (netif_loop_tick[cid] % job-&gt;skip_loops == <span class="number">0</span>) &#123;</span><br><span class="line">                do_lcore_job(job);</span><br><span class="line">                <span class="comment">//netif_loop_tick[cid] = 0;</span></span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">/* 上面代码有点类似于netfilter处理链，数据包会被处理链的job依次处理, 这些job链放在netif_lcore_jobs 这个全局变量中。</span></span><br><span class="line"><span class="comment">        那么，有哪些job呢，在什么地方初始化这个全局变量的呢？他们的处理顺序是怎么样的？在下一节会有说明*/</span></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_RECORD_BIG_LOOP</span></span><br><span class="line">        loop_end = rte_get_timer_cycles();</span><br><span class="line">        loop_time = (loop_end - loop_start) * <span class="number">1E6</span> / cycles_per_sec;</span><br><span class="line">        <span class="keyword">if</span> (loop_time &gt; longest_lcore_loop[cid]) &#123;</span><br><span class="line">            RTE_LOG(WARNING, NETIF, <span class="string">"update longest_lcore_loop[%d] = %d (&lt;- %d)\n"</span>,</span><br><span class="line">                    cid, loop_time, longest_lcore_loop[cid]);</span><br><span class="line">            longest_lcore_loop[cid] = loop_time;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (loop_time &gt; BIG_LOOP_THRESH) &#123;</span><br><span class="line">            print_job_time(buf, <span class="keyword">sizeof</span>(buf));</span><br><span class="line">            RTE_LOG(WARNING, NETIF, <span class="string">"lcore[%d] loop over %d usecs (actual=%d, max=%d):\n%s\n"</span>,</span><br><span class="line">                    cid, BIG_LOOP_THRESH, loop_time, longest_lcore_loop[cid], buf);</span><br><span class="line">        &#125;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"><span class="comment">/* CONFIG_RECORD_BIG_LOOP给统计和debug用，暂不关心 */</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> EDPVS_OK;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">//那么do_lcore_job 做了什么呢？ 其实do_lcore_job就是调用了job结构体中注册的函数指针指向的函数。</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">do_lcore_job</span><span class="params">(struct netif_lcore_loop_job *job)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_RECORD_BIG_LOOP</span></span><br><span class="line">    <span class="keyword">uint64_t</span> job_start, job_end;</span><br><span class="line">    job_start = rte_get_timer_cycles();</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line"></span><br><span class="line">    job-&gt;func(job-&gt;data);</span><br><span class="line">    <span class="comment">// 这里就是真正干活的地方了。</span></span><br><span class="line">    <span class="comment">// func 函数指针在main函数中进行了初始化，初始化过程及代码位置在下一节会讲到。</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_RECORD_BIG_LOOP</span></span><br><span class="line">    job_end = rte_get_timer_cycles();</span><br><span class="line">    job-&gt;job_time[rte_lcore_id()] = (job_end - job_start) * <span class="number">1E6</span> / cycles_per_sec;</span><br><span class="line"><span class="meta">#<span class="meta-keyword">endif</span></span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h1 id="DPVS-dataplane线程job初始化（-也就是-netif-lcore-jobs-全局变量的初始化）"><a href="#DPVS-dataplane线程job初始化（-也就是-netif-lcore-jobs-全局变量的初始化）" class="headerlink" title="DPVS dataplane线程job初始化（ 也就是 netif_lcore_jobs 全局变量的初始化）"></a>DPVS dataplane线程job初始化（ 也就是 netif_lcore_jobs 全局变量的初始化）</h1><p>目前job的类型为，又有NETIF_LCORE_JOB_LOOP和NETIF_LCORE_JOB_SLOW有用到：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">enum netif_lcore_job_type &#123;</span><br><span class="line">    NETIF_LCORE_JOB_INIT      = 0,</span><br><span class="line">    NETIF_LCORE_JOB_LOOP      = 1,</span><br><span class="line">    NETIF_LCORE_JOB_SLOW      = 2,</span><br><span class="line">    NETIF_LCORE_JOB_TYPE_MAX  = 3,</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure></p>
+<h2 id="job注册函数"><a href="#job注册函数" class="headerlink" title="job注册函数"></a>job注册函数</h2><p>netif_lcore_loop_job_register 函数将job这测到netif_lcore_jobs这个全局变量中。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">netif_lcore_loop_job_register</span><span class="params">(struct netif_lcore_loop_job *lcore_job)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">netif_lcore_loop_job</span> *<span class="title">cur</span>;</span></span><br><span class="line">    <span class="keyword">if</span> (unlikely(<span class="literal">NULL</span> == lcore_job))</span><br><span class="line">        <span class="keyword">return</span> EDPVS_INVAL;</span><br><span class="line"></span><br><span class="line">    list_for_each_entry(cur, &amp;netif_lcore_jobs[lcore_job-&gt;type], <span class="built_in">list</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (cur == lcore_job) &#123;</span><br><span class="line">            <span class="keyword">return</span> EDPVS_EXIST;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (unlikely(NETIF_LCORE_JOB_SLOW == lcore_job-&gt;type &amp;&amp; lcore_job-&gt;skip_loops &lt;= <span class="number">0</span>))</span><br><span class="line">        <span class="keyword">return</span> EDPVS_INVAL;</span><br><span class="line"></span><br><span class="line">    list_add_tail(&amp;lcore_job-&gt;<span class="built_in">list</span>, &amp;netif_lcore_jobs[lcore_job-&gt;type]);</span><br><span class="line">    <span class="comment">//netif_lcore_jobs 记录job的全局变量，这个在netif_loop用到了</span></span><br><span class="line">    <span class="keyword">return</span> EDPVS_OK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<p>那么在哪些位置调用了netif_lcore_loop_job_register 注册job，通过阅读源代码，可以发现注册NETIF_LCORE_JOB_LOOP， NETIF_LCORE_JOB_SLOW 这两种类型的job分布在如下所示位置。</p>
+<h2 id="NETIF-LCORE-JOB-LOOP-job注册"><a href="#NETIF-LCORE-JOB-LOOP-job注册" class="headerlink" title="NETIF_LCORE_JOB_LOOP job注册"></a>NETIF_LCORE_JOB_LOOP job注册</h2><p><strong> 第一处： main-&gt;netif_init-&gt;netif_lcore_init函数中：</strong><br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/* register lcore jobs*/</span></span><br><span class="line"><span class="built_in">snprintf</span>(netif_jobs[<span class="number">0</span>].name, <span class="keyword">sizeof</span>(netif_jobs[<span class="number">0</span>].name) - <span class="number">1</span>, <span class="string">"%s"</span>, <span class="string">"recv_fwd"</span>);</span><br><span class="line">netif_jobs[<span class="number">0</span>].func = lcore_job_recv_fwd;</span><br><span class="line">netif_jobs[<span class="number">0</span>].data = <span class="literal">NULL</span>;</span><br><span class="line">netif_jobs[<span class="number">0</span>].type = NETIF_LCORE_JOB_LOOP;</span><br><span class="line"><span class="built_in">snprintf</span>(netif_jobs[<span class="number">1</span>].name, <span class="keyword">sizeof</span>(netif_jobs[<span class="number">1</span>].name) - <span class="number">1</span>, <span class="string">"%s"</span>, <span class="string">"xmit"</span>);</span><br><span class="line">netif_jobs[<span class="number">1</span>].func = lcore_job_xmit;</span><br><span class="line">netif_jobs[<span class="number">1</span>].data = <span class="literal">NULL</span>;</span><br><span class="line">netif_jobs[<span class="number">1</span>].type = NETIF_LCORE_JOB_LOOP;</span><br><span class="line"><span class="built_in">snprintf</span>(netif_jobs[<span class="number">2</span>].name, <span class="keyword">sizeof</span>(netif_jobs[<span class="number">2</span>].name) - <span class="number">1</span>, <span class="string">"%s"</span>, <span class="string">"timer_manage"</span>);</span><br><span class="line">netif_jobs[<span class="number">2</span>].func = lcore_job_timer_manage;</span><br><span class="line">netif_jobs[<span class="number">2</span>].data = <span class="literal">NULL</span>;</span><br><span class="line">netif_jobs[<span class="number">2</span>].type = NETIF_LCORE_JOB_LOOP;</span><br></pre></td></tr></table></figure></p>
+<p><strong> 第二处： main-&gt;ctrl_init-&gt;msg_init</strong><br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">ctrl_lcore_job.func = slave_lcore_loop_func;</span><br><span class="line">ctrl_lcore_job.data = <span class="literal">NULL</span>;</span><br><span class="line">ctrl_lcore_job.type = NETIF_LCORE_JOB_LOOP;</span><br><span class="line"><span class="keyword">if</span> ((ret = netif_lcore_loop_job_register(&amp;ctrl_lcore_job)) &lt; <span class="number">0</span>) &#123;</span><br><span class="line">    RTE_LOG(ERR, MSGMGR, <span class="string">"%s: fail to register ctrl func on slave lcores\n"</span>, __func__);</span><br><span class="line">    <span class="keyword">return</span> ret;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
+<h2 id="NETIF-LCORE-JOB-SLOW-job注册"><a href="#NETIF-LCORE-JOB-SLOW-job注册" class="headerlink" title="NETIF_LCORE_JOB_SLOW job注册"></a>NETIF_LCORE_JOB_SLOW job注册</h2><p><strong> 第一处： main-&gt;inet_init -&gt; ipv4_init-&gt; ipv4_frag_init </strong><br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">frag_job.func = ipv4_frag_job;</span><br><span class="line">frag_job.data = <span class="literal">NULL</span>;</span><br><span class="line">frag_job.type = NETIF_LCORE_JOB_SLOW;</span><br><span class="line">frag_job.skip_loops = IP4_FRAG_FREE_DEATH_ROW_INTERVAL;</span><br><span class="line">err = netif_lcore_loop_job_register(&amp;frag_job);</span><br></pre></td></tr></table></figure></p>
+<p><strong> 第二处： mian-&gt;inet_init -&gt; neigh_init -&gt; arp_init </strong><br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">neigh_sync_job.func = neigh_process_ring;</span><br><span class="line">neigh_sync_job.data = <span class="literal">NULL</span>;</span><br><span class="line">neigh_sync_job.type = NETIF_LCORE_JOB_SLOW;</span><br><span class="line">neigh_sync_job.skip_loops = NEIGH_PROCESS_MAC_RING_INTERVAL;</span><br><span class="line">err = netif_lcore_loop_job_register(&amp;neigh_sync_job);</span><br></pre></td></tr></table></figure></p>
+<p><strong> 通过上述分析，那么我们可以知道job的处理流程为 </strong><br>以下流程虽然都要执行，但是函数前后并不是强制依赖，比如lcore_job_timer_manage 不依赖于lcore_job_xmit的执行结果<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">lcore_job_recv_fwd -&gt; lcore_job_xmit -&gt; lcore_job_timer_manage -&gt; slave_lcore_loop_func -&gt;</span><br><span class="line">ipv4_frag_job -&gt; neigh_process_ring</span><br></pre></td></tr></table></figure></p>
+<p>这些函数的具体功能，将在下一章节进行分析。</p>
+<p>启动过程就到此结束了，若有疑问，欢迎发邮件和我联系。</p>
+
+      
+    </div>
+    
+    
+    
+
+    
+
+    
+      <div>
+        <div style="padding: 10px 0; margin: 20px auto; width: 90%; text-align: center;">
+  <div>坚持原创技术分享，您的支持将鼓励我继续创作！</div>
+  <button id="rewardButton" disable="enable" onclick="var qr = document.getElementById('QR'); if (qr.style.display === 'none') {qr.style.display='block';} else {qr.style.display='none'}">
+    <span>打赏</span>
+  </button>
+  <div id="QR" style="display: none;">
+
+    
+      <div id="wechat" style="display: inline-block">
+        <img id="wechat_qr" src="/images/wechat.png" alt="独孤酒剑 微信支付"/>
+        <p>微信支付</p>
+      </div>
+    
+
+    
+      <div id="alipay" style="display: inline-block">
+        <img id="alipay_qr" src="/images/alipay.jpg" alt="独孤酒剑 支付宝"/>
+        <p>支付宝</p>
+      </div>
+    
+
+    
+
+  </div>
+</div>
+
+      </div>
+    
+
+    
+
+    <footer class="post-footer">
+      
+        <div class="post-tags">
+          
+            <a href="/tags/网络转发/" rel="tag"># 网络转发</a>
+          
+            <a href="/tags/DPVS/" rel="tag"># DPVS</a>
+          
+            <a href="/tags/DPDK/" rel="tag"># DPDK</a>
+          
+        </div>
+      
+
+      
+      
+      
+
+      
+        <div class="post-nav">
+          <div class="post-nav-next post-nav-item">
+            
+              <a href="/2018/05/03/c语言构造函数/" rel="next" title="c语言构造函数">
+                <i class="fa fa-chevron-left"></i> c语言构造函数
+              </a>
+            
+          </div>
+
+          <span class="post-nav-divider"></span>
+
+          <div class="post-nav-prev post-nav-item">
+            
+              <a href="/2018/05/03/lsa/" rel="prev" title="ospf lsa理解（转）">
+                ospf lsa理解（转） <i class="fa fa-chevron-right"></i>
+              </a>
+            
+          </div>
+        </div>
+      
+
+      
+      
+    </footer>
+  </div>
+  
+  
+  
+  </article>
+
+
+
+    <div class="post-spread">
+      
+    </div>
+  </div>
+
+
+          </div>
+          
+
+
+          
+
+  
+
+
+
+        </div>
+        
+          
+  
+  <div class="sidebar-toggle">
+    <div class="sidebar-toggle-line-wrap">
+      <span class="sidebar-toggle-line sidebar-toggle-line-first"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-middle"></span>
+      <span class="sidebar-toggle-line sidebar-toggle-line-last"></span>
+    </div>
+  </div>
+
+  <aside id="sidebar" class="sidebar">
+    
+    <div class="sidebar-inner">
+
+      
+
+      
+        <ul class="sidebar-nav motion-element">
+          <li class="sidebar-nav-toc sidebar-nav-active" data-target="post-toc-wrap">
+            文章目录
+          </li>
+          <li class="sidebar-nav-overview" data-target="site-overview-wrap">
+            站点概览
+          </li>
+        </ul>
+      
+
+      <section class="site-overview-wrap sidebar-panel">
+        <div class="site-overview">
+          <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+            
+              <img class="site-author-image" itemprop="image"
+                src="/images/title.jpg"
+                alt="独孤酒剑" />
+            
+              <p class="site-author-name" itemprop="name">独孤酒剑</p>
+              <p class="site-description motion-element" itemprop="description">分享在学习工作过程中的感悟</p>
+          </div>
+
+          <nav class="site-state motion-element">
+
+            
+              <div class="site-state-item site-state-posts">
+              
+                <a href="/archives/">
+              
+                  <span class="site-state-item-count">9</span>
+                  <span class="site-state-item-name">日志</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-categories">
+                <a href="/categories/index.html">
+                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-name">分类</span>
+                </a>
+              </div>
+            
+
+            
+              
+              
+              <div class="site-state-item site-state-tags">
+                <a href="/tags/index.html">
+                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-name">标签</span>
+                </a>
+              </div>
+            
+
+          </nav>
+
+          
+            <div class="feed-link motion-element">
+              <a href="/atom.xml" rel="alternate">
+                <i class="fa fa-rss"></i>
+                RSS
+              </a>
+            </div>
+          
+
+          
+
+          
+          
+
+          
+          
+
+          
+
+        </div>
+      </section>
+
+      
+      <!--noindex-->
+        <section class="post-toc-wrap motion-element sidebar-panel sidebar-panel-active">
+          <div class="post-toc">
+
+            
+              
+            
+
+            
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#从main函数开始"><span class="nav-number">1.</span> <span class="nav-text">从main函数开始</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#DPVS-dataplane线程，即工作线程"><span class="nav-number">2.</span> <span class="nav-text">DPVS dataplane线程，即工作线程</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#DPVS-dataplane线程job初始化（-也就是-netif-lcore-jobs-全局变量的初始化）"><span class="nav-number">3.</span> <span class="nav-text">DPVS dataplane线程job初始化（ 也就是 netif_lcore_jobs 全局变量的初始化）</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#job注册函数"><span class="nav-number">3.1.</span> <span class="nav-text">job注册函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#NETIF-LCORE-JOB-LOOP-job注册"><span class="nav-number">3.2.</span> <span class="nav-text">NETIF_LCORE_JOB_LOOP job注册</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#NETIF-LCORE-JOB-SLOW-job注册"><span class="nav-number">3.3.</span> <span class="nav-text">NETIF_LCORE_JOB_SLOW job注册</span></a></li></ol></li></ol></div>
+            
+
+          </div>
+        </section>
+      <!--/noindex-->
+      
+
+      
+
+    </div>
+  </aside>
+
+
+        
+      </div>
+    </main>
+
+    <footer id="footer" class="footer">
+      <div class="footer-inner">
+        <div class="copyright">&copy; 2017 &mdash; <span itemprop="copyrightYear">2018</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">独孤酒剑</span>
+
+  
+</div>
+
+
+  <div class="powered-by">由 <a class="theme-link" target="_blank" href="https://hexo.io">Hexo</a> 强力驱动</div>
+
+
+
+  <span class="post-meta-divider">|</span>
+
+
+
+  <div class="theme-info">主题 &mdash; <a class="theme-link" target="_blank" href="https://github.com/iissnan/hexo-theme-next">NexT.Gemini</a> v5.1.4</div>
+
+
+
+
+        
+
+
+
+
+
+
+
+        
+      </div>
+    </footer>
+
+    
+      <div class="back-to-top">
+        <i class="fa fa-arrow-up"></i>
+        
+      </div>
+    
+
+    
+
+  </div>
+
+  
+
+<script type="text/javascript">
+  if (Object.prototype.toString.call(window.Promise) !== '[object Function]') {
+    window.Promise = null;
+  }
+</script>
+
+
+
+
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery/index.js?v=2.1.3"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fastclick/lib/fastclick.min.js?v=1.0.6"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/jquery_lazyload/jquery.lazyload.js?v=1.9.7"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/velocity/velocity.ui.min.js?v=1.2.1"></script>
+  
+
+  
+  
+    <script type="text/javascript" src="/lib/fancybox/source/jquery.fancybox.pack.js?v=2.1.5"></script>
+  
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/utils.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/motion.js?v=5.1.4"></script>
+
+
+
+  
+  
+
+
+  <script type="text/javascript" src="/js/src/affix.js?v=5.1.4"></script>
+
+  <script type="text/javascript" src="/js/src/schemes/pisces.js?v=5.1.4"></script>
+
+
+
+  
+  <script type="text/javascript" src="/js/src/scrollspy.js?v=5.1.4"></script>
+<script type="text/javascript" src="/js/src/post-details.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  <script type="text/javascript" src="/js/src/bootstrap.js?v=5.1.4"></script>
+
+
+
+  
+
+
+  
+
+
+
+
+	
+
+
+
+
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  <script type="text/javascript">
+    // Popup Window;
+    var isfetched = false;
+    var isXml = true;
+    // Search DB path;
+    var search_path = "search.xml";
+    if (search_path.length === 0) {
+      search_path = "search.xml";
+    } else if (/json$/i.test(search_path)) {
+      isXml = false;
+    }
+    var path = "/" + search_path;
+    // monitor main search box;
+
+    var onPopupClose = function (e) {
+      $('.popup').hide();
+      $('#local-search-input').val('');
+      $('.search-result-list').remove();
+      $('#no-result').remove();
+      $(".local-search-pop-overlay").remove();
+      $('body').css('overflow', '');
+    }
+
+    function proceedsearch() {
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay"></div>')
+        .css('overflow', 'hidden');
+      $('.search-popup-overlay').click(onPopupClose);
+      $('.popup').toggle();
+      var $localSearchInput = $('#local-search-input');
+      $localSearchInput.attr("autocapitalize", "none");
+      $localSearchInput.attr("autocorrect", "off");
+      $localSearchInput.focus();
+    }
+
+    // search function;
+    var searchFunc = function(path, search_id, content_id) {
+      'use strict';
+
+      // start loading animation
+      $("body")
+        .append('<div class="search-popup-overlay local-search-pop-overlay">' +
+          '<div id="search-loading-icon">' +
+          '<i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>' +
+          '</div>' +
+          '</div>')
+        .css('overflow', 'hidden');
+      $("#search-loading-icon").css('margin', '20% auto 0 auto').css('text-align', 'center');
+
+      $.ajax({
+        url: path,
+        dataType: isXml ? "xml" : "json",
+        async: true,
+        success: function(res) {
+          // get the contents from search data
+          isfetched = true;
+          $('.popup').detach().appendTo('.header-inner');
+          var datas = isXml ? $("entry", res).map(function() {
+            return {
+              title: $("title", this).text(),
+              content: $("content",this).text(),
+              url: $("url" , this).text()
+            };
+          }).get() : res;
+          var input = document.getElementById(search_id);
+          var resultContent = document.getElementById(content_id);
+          var inputEventFunction = function() {
+            var searchText = input.value.trim().toLowerCase();
+            var keywords = searchText.split(/[\s\-]+/);
+            if (keywords.length > 1) {
+              keywords.push(searchText);
+            }
+            var resultItems = [];
+            if (searchText.length > 0) {
+              // perform local searching
+              datas.forEach(function(data) {
+                var isMatch = false;
+                var hitCount = 0;
+                var searchTextCount = 0;
+                var title = data.title.trim();
+                var titleInLowerCase = title.toLowerCase();
+                var content = data.content.trim().replace(/<[^>]+>/g,"");
+                var contentInLowerCase = content.toLowerCase();
+                var articleUrl = decodeURIComponent(data.url);
+                var indexOfTitle = [];
+                var indexOfContent = [];
+                // only match articles with not empty titles
+                if(title != '') {
+                  keywords.forEach(function(keyword) {
+                    function getIndexByWord(word, text, caseSensitive) {
+                      var wordLen = word.length;
+                      if (wordLen === 0) {
+                        return [];
+                      }
+                      var startPosition = 0, position = [], index = [];
+                      if (!caseSensitive) {
+                        text = text.toLowerCase();
+                        word = word.toLowerCase();
+                      }
+                      while ((position = text.indexOf(word, startPosition)) > -1) {
+                        index.push({position: position, word: word});
+                        startPosition = position + wordLen;
+                      }
+                      return index;
+                    }
+
+                    indexOfTitle = indexOfTitle.concat(getIndexByWord(keyword, titleInLowerCase, false));
+                    indexOfContent = indexOfContent.concat(getIndexByWord(keyword, contentInLowerCase, false));
+                  });
+                  if (indexOfTitle.length > 0 || indexOfContent.length > 0) {
+                    isMatch = true;
+                    hitCount = indexOfTitle.length + indexOfContent.length;
+                  }
+                }
+
+                // show search results
+
+                if (isMatch) {
+                  // sort index by position of keyword
+
+                  [indexOfTitle, indexOfContent].forEach(function (index) {
+                    index.sort(function (itemLeft, itemRight) {
+                      if (itemRight.position !== itemLeft.position) {
+                        return itemRight.position - itemLeft.position;
+                      } else {
+                        return itemLeft.word.length - itemRight.word.length;
+                      }
+                    });
+                  });
+
+                  // merge hits into slices
+
+                  function mergeIntoSlice(text, start, end, index) {
+                    var item = index[index.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    var hits = [];
+                    var searchTextCountInSlice = 0;
+                    while (position + word.length <= end && index.length != 0) {
+                      if (word === searchText) {
+                        searchTextCountInSlice++;
+                      }
+                      hits.push({position: position, length: word.length});
+                      var wordEnd = position + word.length;
+
+                      // move to next position of hit
+
+                      index.pop();
+                      while (index.length != 0) {
+                        item = index[index.length - 1];
+                        position = item.position;
+                        word = item.word;
+                        if (wordEnd > position) {
+                          index.pop();
+                        } else {
+                          break;
+                        }
+                      }
+                    }
+                    searchTextCount += searchTextCountInSlice;
+                    return {
+                      hits: hits,
+                      start: start,
+                      end: end,
+                      searchTextCount: searchTextCountInSlice
+                    };
+                  }
+
+                  var slicesOfTitle = [];
+                  if (indexOfTitle.length != 0) {
+                    slicesOfTitle.push(mergeIntoSlice(title, 0, title.length, indexOfTitle));
+                  }
+
+                  var slicesOfContent = [];
+                  while (indexOfContent.length != 0) {
+                    var item = indexOfContent[indexOfContent.length - 1];
+                    var position = item.position;
+                    var word = item.word;
+                    // cut out 100 characters
+                    var start = position - 20;
+                    var end = position + 80;
+                    if(start < 0){
+                      start = 0;
+                    }
+                    if (end < position + word.length) {
+                      end = position + word.length;
+                    }
+                    if(end > content.length){
+                      end = content.length;
+                    }
+                    slicesOfContent.push(mergeIntoSlice(content, start, end, indexOfContent));
+                  }
+
+                  // sort slices in content by search text's count and hits' count
+
+                  slicesOfContent.sort(function (sliceLeft, sliceRight) {
+                    if (sliceLeft.searchTextCount !== sliceRight.searchTextCount) {
+                      return sliceRight.searchTextCount - sliceLeft.searchTextCount;
+                    } else if (sliceLeft.hits.length !== sliceRight.hits.length) {
+                      return sliceRight.hits.length - sliceLeft.hits.length;
+                    } else {
+                      return sliceLeft.start - sliceRight.start;
+                    }
+                  });
+
+                  // select top N slices in content
+
+                  var upperBound = parseInt('1');
+                  if (upperBound >= 0) {
+                    slicesOfContent = slicesOfContent.slice(0, upperBound);
+                  }
+
+                  // highlight title and content
+
+                  function highlightKeyword(text, slice) {
+                    var result = '';
+                    var prevEnd = slice.start;
+                    slice.hits.forEach(function (hit) {
+                      result += text.substring(prevEnd, hit.position);
+                      var end = hit.position + hit.length;
+                      result += '<b class="search-keyword">' + text.substring(hit.position, end) + '</b>';
+                      prevEnd = end;
+                    });
+                    result += text.substring(prevEnd, slice.end);
+                    return result;
+                  }
+
+                  var resultItem = '';
+
+                  if (slicesOfTitle.length != 0) {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + highlightKeyword(title, slicesOfTitle[0]) + "</a>";
+                  } else {
+                    resultItem += "<li><a href='" + articleUrl + "' class='search-result-title'>" + title + "</a>";
+                  }
+
+                  slicesOfContent.forEach(function (slice) {
+                    resultItem += "<a href='" + articleUrl + "'>" +
+                      "<p class=\"search-result\">" + highlightKeyword(content, slice) +
+                      "...</p>" + "</a>";
+                  });
+
+                  resultItem += "</li>";
+                  resultItems.push({
+                    item: resultItem,
+                    searchTextCount: searchTextCount,
+                    hitCount: hitCount,
+                    id: resultItems.length
+                  });
+                }
+              })
+            };
+            if (keywords.length === 1 && keywords[0] === "") {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-search fa-5x" /></div>'
+            } else if (resultItems.length === 0) {
+              resultContent.innerHTML = '<div id="no-result"><i class="fa fa-frown-o fa-5x" /></div>'
+            } else {
+              resultItems.sort(function (resultLeft, resultRight) {
+                if (resultLeft.searchTextCount !== resultRight.searchTextCount) {
+                  return resultRight.searchTextCount - resultLeft.searchTextCount;
+                } else if (resultLeft.hitCount !== resultRight.hitCount) {
+                  return resultRight.hitCount - resultLeft.hitCount;
+                } else {
+                  return resultRight.id - resultLeft.id;
+                }
+              });
+              var searchResultList = '<ul class=\"search-result-list\">';
+              resultItems.forEach(function (result) {
+                searchResultList += result.item;
+              })
+              searchResultList += "</ul>";
+              resultContent.innerHTML = searchResultList;
+            }
+          }
+
+          if ('auto' === 'auto') {
+            input.addEventListener('input', inputEventFunction);
+          } else {
+            $('.search-icon').click(inputEventFunction);
+            input.addEventListener('keypress', function (event) {
+              if (event.keyCode === 13) {
+                inputEventFunction();
+              }
+            });
+          }
+
+          // remove loading animation
+          $(".local-search-pop-overlay").remove();
+          $('body').css('overflow', '');
+
+          proceedsearch();
+        }
+      });
+    }
+
+    // handle and trigger popup window;
+    $('.popup-trigger').click(function(e) {
+      e.stopPropagation();
+      if (isfetched === false) {
+        searchFunc(path, 'local-search-input', 'local-search-result');
+      } else {
+        proceedsearch();
+      };
+    });
+
+    $('.popup-btn-close').click(onPopupClose);
+    $('.popup').click(function(e){
+      e.stopPropagation();
+    });
+    $(document).on('keyup', function (event) {
+      var shouldDismissSearchPopup = event.which === 27 &&
+        $('.search-popup').is(':visible');
+      if (shouldDismissSearchPopup) {
+        onPopupClose();
+      }
+    });
+  </script>
+
+
+
+
+
+  
+
+  
+
+  
+
+  
+  
+
+  
+
+  
+
+  
+
+</body>
+</html>
