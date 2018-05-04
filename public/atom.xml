@@ -6,7 +6,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://blog.mycise.com/"/>
-  <updated>2018-05-03T14:36:49.695Z</updated>
+  <updated>2018-05-03T14:36:49.691Z</updated>
   <id>http://blog.mycise.com/</id>
   
   <author>
@@ -15,56 +15,6 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
-  
-  <entry>
-    <title>vim备忘录</title>
-    <link href="http://blog.mycise.com/2018/05/03/vim%E5%A4%87%E5%BF%98%E5%BD%95/"/>
-    <id>http://blog.mycise.com/2018/05/03/vim备忘录/</id>
-    <published>2018-05-03T14:36:49.694Z</published>
-    <updated>2018-05-03T14:36:49.695Z</updated>
-    
-    <content type="html"><![CDATA[<h1 id="C语言VIM设置"><a href="#C语言VIM设置" class="headerlink" title="C语言VIM设置"></a>C语言VIM设置</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">:set nu &quot;设置显示行号  </span><br><span class="line">:set bg=dark &quot;背景色设置  </span><br><span class="line">:set cindent &quot;设置c语言自动对齐  </span><br><span class="line">:set history=1000 &quot;设置历史记录条数  </span><br><span class="line">:set ts=4&quot;设置tab对应空格数</span><br><span class="line">:set expandtab &quot;vim 里面按下tab 会自动替换为4个空格</span><br></pre></td></tr></table></figure><h1 id="tab和空格替换"><a href="#tab和空格替换" class="headerlink" title="tab和空格替换"></a>tab和空格替换</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">TAB替换为空格：</span><br><span class="line">:set ts=4</span><br><span class="line">:set expandtab</span><br><span class="line">:%retab!</span><br><span class="line"></span><br><span class="line">空格替换为TAB：</span><br><span class="line">:set ts=4</span><br><span class="line">:set noexpandtab</span><br><span class="line">:%retab!</span><br></pre></td></tr></table></figure><h1 id="VIM代码格式化"><a href="#VIM代码格式化" class="headerlink" title="VIM代码格式化"></a>VIM代码格式化</h1><h2 id="astyle"><a href="#astyle" class="headerlink" title="astyle"></a>astyle</h2><p>astyle是款代码格式化工具，具体使用参考官网：<a href="http://astyle.sourceforge.net/" target="_blank" rel="noopener">http://astyle.sourceforge.net/</a></p><h2 id="astyle和vim整合"><a href="#astyle和vim整合" class="headerlink" title="astyle和vim整合"></a>astyle和vim整合</h2><p>在和vim整合之前，首先应保证astyle成功安装，并可用。<br>vim具有掉外部命令的能力，因此可以在.vimrc中添加如下代码，编辑完成后，按F2即可对代码进行格式。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line">map &lt;F2&gt; :call FormatCode()&lt;CR&gt;</span><br><span class="line">func! FormatCode()</span><br><span class="line">    exec &quot;w&quot;</span><br><span class="line">    if &amp;filetype == &apos;c&apos; || &amp;filetype == &apos;h&apos;</span><br><span class="line">        exec &quot;!astyle --style=linux --suffix=none %&quot;</span><br><span class="line">    elseif &amp;filetype == &apos;cpp&apos; || &amp;filetype == &apos;cc&apos; || &amp;filetype == &apos;hpp&apos;</span><br><span class="line">        exec &quot;!astyle --style=linux --suffix=none %&quot;</span><br><span class="line">    elseif &amp;filetype == &apos;perl&apos;</span><br><span class="line">        exec &quot;!astyle --style=gnu --suffix=none %&quot;</span><br><span class="line">    elseif &amp;filetype == &apos;py&apos;|| &amp;filetype == &apos;python&apos;</span><br><span class="line">        exec &quot;!autopep8 --in-place --aggressive %&quot;</span><br><span class="line">    elseif &amp;filetype == &apos;java&apos;</span><br><span class="line">        exec &quot;!astyle --style=java --suffix=none %&quot;</span><br><span class="line">    elseif &amp;filetype == &apos;jsp&apos;</span><br><span class="line">        exec &quot;!astyle --style=gnu --suffix=none %&quot;</span><br><span class="line">    elseif &amp;filetype == &apos;xml&apos;</span><br><span class="line">        exec &quot;!astyle --style=gnu --suffix=none %&quot;</span><br><span class="line">    else</span><br><span class="line">        exec &quot;normal gg=G&quot;</span><br><span class="line">        return</span><br><span class="line">    endif</span><br><span class="line">endfunc</span><br></pre></td></tr></table></figure></p>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h1 id=&quot;C语言VIM设置&quot;&gt;&lt;a href=&quot;#C语言VIM设置&quot; class=&quot;headerlink&quot; title=&quot;C语言VIM设置&quot;&gt;&lt;/a&gt;C语言VIM设置&lt;/h1&gt;&lt;figure class=&quot;highlight plain&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td cl
-      
-    
-    </summary>
-    
-      <category term="备忘录" scheme="http://blog.mycise.com/categories/%E5%A4%87%E5%BF%98%E5%BD%95/"/>
-    
-    
-      <category term="vim" scheme="http://blog.mycise.com/tags/vim/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>makefile备忘录</title>
-    <link href="http://blog.mycise.com/2018/05/03/makefile%E5%A4%87%E5%BF%98%E5%BD%95/"/>
-    <id>http://blog.mycise.com/2018/05/03/makefile备忘录/</id>
-    <published>2018-05-03T14:36:49.693Z</published>
-    <updated>2018-05-03T14:36:49.693Z</updated>
-    
-    <content type="html"><![CDATA[<h1 id="Makefile-中-的区别"><a href="#Makefile-中-的区别" class="headerlink" title="Makefile 中:= ?= += =的区别"></a>Makefile 中:= ?= += =的区别</h1><p>在Makefile中我们经常看到 = := ?= +=这几个赋值运算符，那么他们有什么区别呢？我们来做个简单的实验</p><p>新建一个Makefile，内容为：</p><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">ifdef DEFINE_VRE</span><br><span class="line">    VRE = &quot;Hello World!&quot;</span><br><span class="line">else</span><br><span class="line">endif</span><br><span class="line"></span><br><span class="line">ifeq ($(OPT),define)</span><br><span class="line">    VRE ?= &quot;Hello World! First!&quot;</span><br><span class="line">endif</span><br><span class="line"></span><br><span class="line">ifeq ($(OPT),add)</span><br><span class="line">    VRE += &quot;Kelly!&quot;</span><br><span class="line">endif</span><br><span class="line"></span><br><span class="line">ifeq ($(OPT),recover)</span><br><span class="line">    VRE := &quot;Hello World! Again!&quot;</span><br><span class="line">endif</span><br><span class="line"></span><br><span class="line">all:</span><br><span class="line">    @echo $(VRE)</span><br></pre></td></tr></table></figure><p>敲入以下make命令：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">make DEFINE_VRE=true OPT=define 输出：Hello World!</span><br><span class="line">make DEFINE_VRE=true OPT=add 输出：Hello World! Kelly!</span><br><span class="line">make DEFINE_VRE=true OPT=recover  输出：Hello World! Again!</span><br><span class="line">make DEFINE_VRE= OPT=define 输出：Hello World! First!</span><br><span class="line">make DEFINE_VRE= OPT=add 输出：Kelly!</span><br><span class="line">make DEFINE_VRE= OPT=recover 输出：Hello World! Again!</span><br></pre></td></tr></table></figure></p><p>从上面的结果中我们可以清楚的看到他们的区别了<br>= 是最基本的赋值<br>:= 是覆盖之前的值<br>?= 是如果没有被赋值过就赋予等号后面的值<br>+= 是添加等号后面的值</p>]]></content>
-    
-    <summary type="html">
-    
-      
-      
-        &lt;h1 id=&quot;Makefile-中-的区别&quot;&gt;&lt;a href=&quot;#Makefile-中-的区别&quot; class=&quot;headerlink&quot; title=&quot;Makefile 中:= ?= += =的区别&quot;&gt;&lt;/a&gt;Makefile 中:= ?= += =的区别&lt;/h1&gt;&lt;p&gt;在Mak
-      
-    
-    </summary>
-    
-      <category term="备忘录" scheme="http://blog.mycise.com/categories/%E5%A4%87%E5%BF%98%E5%BD%95/"/>
-    
-    
-      <category term="makefil" scheme="http://blog.mycise.com/tags/makefil/"/>
-    
-  </entry>
   
   <entry>
     <title>dpvs源码分析（二）之链路层</title>
