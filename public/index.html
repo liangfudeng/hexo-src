@@ -241,16 +241,6 @@
           </a>
         </li>
       
-        
-        <li class="menu-item menu-item-commonweal">
-          <a href="/404/" rel="section">
-            
-              <i class="menu-item-icon fa fa-fw fa-heartbeat"></i> <br />
-            
-            公益404
-          </a>
-        </li>
-      
 
       
         <li class="menu-item menu-item-search">
@@ -372,8 +362,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/网络转发/" itemprop="url" rel="index">
-                    <span itemprop="name">网络转发</span>
+                  <a href="/categories/原创精选/" itemprop="url" rel="index">
+                    <span itemprop="name">原创精选</span>
                   </a>
                 </span>
 
@@ -411,7 +401,7 @@
       
         
           
-            <p>本文仅仅概述dpvs二三层协议栈的处理流程，只会对重点函数和流程分析，以避免刚刚接触DPVS的同学被这些细节扰乱视听。后面的章节将会针对于某个某块进行重点分析。废话不多说，开始吧。</p>
+            <p>本文仅仅概述dpvs二三层协议栈的处理流程，只会对重点函数和流程分析，以避免刚刚接触DPVS的同学被这些细节扰乱视听。后面的章节将会针对于某个某块进行重点分析。</p>
 <p>接<strong><a href="/2018/05/03/dpvs源码分析（一）之启动过程/" title="dpvs源码分析（一）之启动过程">dpvs源码分析（一）之启动过程</a></strong>，我们知道，lcore_job_recv_fwd是首先被调动的函数：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">lcore_job_recv_fwd</span><span class="params">(<span class="keyword">void</span> *arg)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    <span class="keyword">int</span> i, j;</span><br><span class="line">    <span class="keyword">portid_t</span> pid;</span><br><span class="line">    <span class="keyword">lcoreid_t</span> cid;</span><br><span class="line">    <span class="class"><span class="keyword">struct</span> <span class="title">netif_queue_conf</span> *<span class="title">qconf</span>;</span></span><br><span class="line"></span><br><span class="line">    cid = rte_lcore_id();</span><br><span class="line">    assert(LCORE_ID_ANY != cid);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; lcore_conf[lcore2index[cid]].nports; i++) &#123;</span><br><span class="line">        pid = lcore_conf[lcore2index[cid]].pqs[i].id;</span><br><span class="line">        assert(pid &lt; rte_eth_dev_count());</span><br><span class="line"></span><br><span class="line">        <span class="keyword">for</span> (j = <span class="number">0</span>; j &lt; lcore_conf[lcore2index[cid]].pqs[i].nrxq; j++) &#123;</span><br><span class="line">            qconf = &amp;lcore_conf[lcore2index[cid]].pqs[i].rxqs[j];</span><br><span class="line">            </span><br><span class="line">            <span class="comment">// 从arp_ring获取arp报文，最后调用lcore_process_packets 处理，所以直接看lcore_process_packets这个函数就好了。</span></span><br><span class="line">            lcore_process_arp_ring(qconf,cid);</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 从网卡收包，存放于qconf-&gt;mbufs 结构体重，len为包的数量</span></span><br><span class="line">            qconf-&gt;len = netif_rx_burst(pid, qconf);</span><br><span class="line">            <span class="comment">//统计</span></span><br><span class="line">            lcore_stats_burst(&amp;lcore_stats[cid], qconf-&gt;len);</span><br><span class="line">            </span><br><span class="line">            <span class="comment">//处理数据报文，</span></span><br><span class="line">            <span class="comment">//mbuf会在lcore_process_packets被释放</span></span><br><span class="line">            lcore_process_packets(qconf, qconf-&gt;mbufs, cid, qconf-&gt;len, <span class="number">1</span>);</span><br><span class="line">            </span><br><span class="line">            <span class="comment">//将报文发送给Linux kernel</span></span><br><span class="line">            kni_send2kern_loop(pid, qconf);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">lcore_process_packets</span><span class="params">(struct netif_queue_conf *qconf, struct rte_mbuf **mbufs,</span></span></span><br><span class="line"><span class="function"><span class="params">                      <span class="keyword">lcoreid_t</span> cid, <span class="keyword">uint16_t</span> count, <span class="keyword">bool</span> pretetch)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* prefetch packets </span></span><br><span class="line"><span class="comment">    预先将数据包从内存加载到cache，这样有可能加快运行速度*/</span></span><br><span class="line">    <span class="keyword">if</span> (pretetch) &#123;</span><br><span class="line">        <span class="keyword">for</span> (t = <span class="number">0</span>; t &lt; qconf-&gt;len &amp;&amp; t &lt; NETIF_PKT_PREFETCH_OFFSET; t++)</span><br><span class="line">            rte_prefetch0(rte_pktmbuf_mtod(qconf-&gt;mbufs[t], <span class="keyword">void</span> *));</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/* L2 filter */</span></span><br><span class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; count; i++) &#123;</span><br><span class="line">        ...</span><br><span class="line">        <span class="comment">/*校验mac地址，如果和物理设备的mac地址一样，被设置为RTE_TYPE_HOST。不一样则被设置为ETH_PKT_OTHERHOST*/</span></span><br><span class="line">        <span class="comment">/* reuse mbuf.packet_type, it was RTE_PTYPE_XXX */</span></span><br><span class="line">        mbuf-&gt;packet_type = eth_type_parse(eth_hdr, dev);</span><br><span class="line"></span><br><span class="line">        <span class="comment">/*</span></span><br><span class="line"><span class="comment">         * 如果通过dpip命令设置了设备forward2kni on，那么所有的报文都会复制一份给kernel</span></span><br><span class="line"><span class="comment">         * 所有数据包复制一份通过kni发送给kernel， 原有mbuf不变。</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="keyword">if</span> (dev-&gt;flag &amp; NETIF_PORT_FLAG_FORWARD2KNI) &#123;</span><br><span class="line">            <span class="keyword">if</span> (likely(<span class="literal">NULL</span> != (mbuf_copied = mbuf_copy(mbuf,</span><br><span class="line">                                pktmbuf_pool[dev-&gt;socket]))))</span><br><span class="line">                kni_ingress(mbuf_copied, dev, qconf);</span><br><span class="line">            <span class="keyword">else</span></span><br><span class="line">                RTE_LOG(WARNING, NETIF, <span class="string">"%s: Failed to copy mbuf\n"</span>,</span><br><span class="line">                        __func__);</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">/*</span></span><br><span class="line"><span class="comment">         * handle VLAN</span></span><br><span class="line"><span class="comment">         * if HW offload vlan strip, it's still need vlan module</span></span><br><span class="line"><span class="comment">         * to act as VLAN filter.</span></span><br><span class="line"><span class="comment">         * vlan_rcv会通过vlanid找到对应的dev，然后将dev id复制给mbuf-&gt;port_id</span></span><br><span class="line"><span class="comment">         */</span></span><br><span class="line">        <span class="keyword">if</span> (eth_hdr-&gt;ether_type == htons(ETH_P_8021Q) ||</span><br><span class="line">            mbuf-&gt;ol_flags &amp; PKT_RX_VLAN_STRIPPED) &#123;</span><br><span class="line">            <span class="keyword">if</span> (vlan_rcv(mbuf, netif_port_get(mbuf-&gt;port)) != EDPVS_OK) &#123;</span><br><span class="line">                rte_pktmbuf_free(mbuf);</span><br><span class="line">                lcore_stats[cid].dropped++;</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">/*通过port id找到对应的dev设备*/</span></span><br><span class="line">            dev = netif_port_get(mbuf-&gt;port);</span><br><span class="line">            <span class="keyword">if</span> (unlikely(!dev)) &#123;</span><br><span class="line">                rte_pktmbuf_free(mbuf);</span><br><span class="line">                lcore_stats[cid].dropped++;</span><br><span class="line">                <span class="keyword">continue</span>;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="comment">/*获取二层头*/</span></span><br><span class="line">            eth_hdr = rte_pktmbuf_mtod(mbuf, struct ether_hdr *);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">/* handler should free mbuf */</span></span><br><span class="line">        netif_deliver_mbuf(mbuf, eth_hdr-&gt;ether_type, dev, qconf,</span><br><span class="line">                           (dev-&gt;flag &amp; NETIF_PORT_FLAG_FORWARD2KNI) ? <span class="literal">true</span>:<span class="literal">false</span>,</span><br><span class="line">                           cid, pkts_from_ring);</span><br><span class="line">        ...</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*上文用到了vlan_rcv这里对vlan_rcv做解析*/</span></span><br><span class="line"><span class="function"><span class="keyword">int</span> <span class="title">vlan_rcv</span><span class="params">(struct rte_mbuf *mbuf, struct netif_port *real_dev)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// 剥离VLAN tag</span></span><br><span class="line">    err = vlan_untag_mbuf(mbuf);</span><br><span class="line">    <span class="keyword">if</span> (unlikely(err != EDPVS_OK))</span><br><span class="line">        <span class="keyword">return</span> err;</span><br><span class="line">    <span class="comment">// 依据VLAN tag找到对应的VLAN设备</span></span><br><span class="line">    dev = vlan_find_dev(real_dev, htons(ETH_P_8021Q),</span><br><span class="line">                        mbuf_vlan_tag_get_id(mbuf));</span><br><span class="line">    mbuf-&gt;port = dev-&gt;id;</span><br><span class="line">    <span class="keyword">if</span> (unlikely(mbuf-&gt;packet_type == ETH_PKT_OTHERHOST)) &#123;</span><br><span class="line">		<span class="comment">/*这里通过目的地址判断，包是不是发送给vlan的。*/</span></span><br><span class="line">        <span class="keyword">if</span> (eth_addr_equal(&amp;ehdr-&gt;d_addr, &amp;dev-&gt;addr))</span><br><span class="line">            mbuf-&gt;packet_type = ETH_PKT_HOST<span class="comment">/*如果是ETH_PKT_OTHERHOST报文会被丢弃*/</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
 <p>前面对vlan神马的都处理了，接下来就是二层报文的处理了：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">int</span> <span class="title">netif_deliver_mbuf</span><span class="params">(struct rte_mbuf *mbuf,</span></span></span><br><span class="line"><span class="function"><span class="params">                                     <span class="keyword">uint16_t</span> eth_type,</span></span></span><br><span class="line"><span class="function"><span class="params">                                     struct netif_port *dev,</span></span></span><br><span class="line"><span class="function"><span class="params">                                     struct netif_queue_conf *qconf,</span></span></span><br><span class="line"><span class="function"><span class="params">                                     <span class="keyword">bool</span> forward2kni,</span></span></span><br><span class="line"><span class="function"><span class="params">                                     <span class="keyword">lcoreid_t</span> cid,</span></span></span><br><span class="line"><span class="function"><span class="params">                                     <span class="keyword">bool</span> pkts_from_ring)</span></span></span><br><span class="line"><span class="function"></span>&#123;</span><br><span class="line">    ...</span><br><span class="line">    pkt_type注册见下文，这里通过eth_type获取ptk_type</span><br><span class="line">    其他协议，都会送给linux kernel</span><br><span class="line">    pt = pkt_type_get(eth_type, dev);</span><br><span class="line">    <span class="keyword">if</span> (!forward2kni &amp;&amp; <span class="literal">NULL</span> == pt) &#123;</span><br><span class="line">    	<span class="comment">/*通过kni，发送给linux kernel*/</span></span><br><span class="line">        kni_ingress(mbuf, dev, qconf);</span><br><span class="line">        <span class="keyword">return</span> EDPVS_OK;</span><br><span class="line">    &#125;</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*clone arp pkt to every queue*/</span></span><br><span class="line">    <span class="keyword">if</span> (pt-&gt;type == rte_cpu_to_be_16(ETHER_TYPE_ARP) &amp;&amp; !pkts_from_ring<span class="comment">/*arp_ring里的报文，肯定不能再入ring了。*/</span>) &#123;</span><br><span class="line">       <span class="comment">/*将arp报文clone到每个队列，每个core维护自己的arp表现*/</span></span><br><span class="line">       ...</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">   <span class="comment">/*Remove len bytes at the beginning of an mbuf. 移除二层头*/</span></span><br><span class="line">    <span class="keyword">if</span> (unlikely(<span class="literal">NULL</span> == rte_pktmbuf_adj(mbuf, <span class="keyword">sizeof</span>(struct ether_hdr))))</span><br><span class="line">        <span class="keyword">return</span> EDPVS_INVPKT;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/*在这里就开始处理上层协议了，目前只会处理ip和arp，也只注册了这两种*/</span></span><br><span class="line">    err = pt-&gt;func(mbuf, dev);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (err == EDPVS_KNICONTINUE) &#123;</span><br><span class="line">        <span class="keyword">if</span> (pkts_from_ring) &#123;</span><br><span class="line">        	<span class="comment">/*pkt_from_ring为arp_ring过来的报文</span></span><br><span class="line"><span class="comment">        	* arp_ring过来的报文不再发给linux kernel，因此需要free mubf</span></span><br><span class="line"><span class="comment">        	*/</span></span><br><span class="line">            rte_pktmbuf_free(mbuf);</span><br><span class="line">            <span class="keyword">return</span> EDPVS_OK;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">if</span> (!forward2kni &amp;&amp; likely(<span class="literal">NULL</span> != rte_pktmbuf_prepend(mbuf,  (mbuf-&gt;data_off - data_off))))</span><br><span class="line">        	<span class="comment">// 发送给linux kernel</span></span><br><span class="line">            kni_ingress(mbuf, dev, qconf);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> EDPVS_OK;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></p>
@@ -660,8 +650,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/备忘录/" itemprop="url" rel="index">
-                    <span itemprop="name">备忘录</span>
+                  <a href="/categories/原创精选/" itemprop="url" rel="index">
+                    <span itemprop="name">原创精选</span>
                   </a>
                 </span>
 
@@ -812,8 +802,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/网络转发/" itemprop="url" rel="index">
-                    <span itemprop="name">网络转发</span>
+                  <a href="/categories/原创精选/" itemprop="url" rel="index">
+                    <span itemprop="name">原创精选</span>
                   </a>
                 </span>
 
@@ -891,162 +881,6 @@
 <img src="/images/lptfp.PNG">
 <p><strong> 详细流程 </strong><br>下面将用流程图的形式来描述多线程令牌桶的实现。在最后会介绍这种令牌桶算法可能存在的问题。<br><img src="/images/lingpaitong3.jpg"></p>
 <h3 id="测试结果"><a href="#测试结果" class="headerlink" title="测试结果"></a>测试结果</h3><p>设置限速11Mbps，测试结果为：<br><img src="/images/lingpaitong_rs.jpg"></p>
-
-          
-        
-      
-    </div>
-    
-    
-    
-
-    
-
-    
-
-    
-
-    <footer class="post-footer">
-      
-
-      
-
-      
-
-      
-      
-        <div class="post-eof"></div>
-      
-    </footer>
-  </div>
-  
-  
-  
-  </article>
-
-
-    
-      
-
-  
-
-  
-  
-  
-
-  <article class="post post-type-normal" itemscope itemtype="http://schema.org/Article">
-  
-  
-  
-  <div class="post-block">
-    <link itemprop="mainEntityOfPage" href="http://blog.mycise.com/2018/05/03/lsa/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="name" content="独孤酒剑">
-      <meta itemprop="description" content="">
-      <meta itemprop="image" content="/images/title.jpg">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="独孤酒剑">
-    </span>
-
-    
-      <header class="post-header">
-
-        
-        
-          <h1 class="post-title" itemprop="name headline">
-                
-                <a class="post-title-link" href="/2018/05/03/lsa/" itemprop="url">ospf lsa理解（转）</a></h1>
-        
-
-        <div class="post-meta">
-          <span class="post-time">
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-calendar-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">发表于</span>
-              
-              <time title="创建于" itemprop="dateCreated datePublished" datetime="2018-05-03T22:28:37+08:00">
-                2018-05-03
-              </time>
-            
-
-            
-
-            
-          </span>
-
-          
-            <span class="post-category" >
-            
-              <span class="post-meta-divider">|</span>
-            
-              <span class="post-meta-item-icon">
-                <i class="fa fa-folder-o"></i>
-              </span>
-              
-                <span class="post-meta-item-text">分类于</span>
-              
-              
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/ospf/" itemprop="url" rel="index">
-                    <span itemprop="name">ospf</span>
-                  </a>
-                </span>
-
-                
-                
-              
-            </span>
-          
-
-          
-            
-          
-
-          
-          
-
-          
-
-          
-
-          
-
-        </div>
-      </header>
-    
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-      
-
-      
-        
-          
-            <p>OSPF的区域类型和LSA类型这两个知识点，经常容易导致人们对他们理解上的混乱，今天就来谈谈这两个概念。<br>本文将会以下面这个拓扑图为例进行讲解。</p>
-<h1 id="LSA-Type，链路状态通告的类型"><a href="#LSA-Type，链路状态通告的类型" class="headerlink" title="LSA Type，链路状态通告的类型"></a>LSA Type，链路状态通告的类型</h1><p>本来想先讲区域类型，但是由于要理解不同类型的区域，必然要涉及到不同类型的LSA，现在把LSA放到前面先讲。<br>我们这里谈谈常见的几种LSA：1、2、3、4、5、7类LSA。</p>
-<h2 id="1类LSA，路由器LSA。"><a href="#1类LSA，路由器LSA。" class="headerlink" title="1类LSA，路由器LSA。"></a>1类LSA，路由器LSA。</h2><p>OSPF网络中所有路由器都会产生1类LSA，他的意思就是表示路由器自己在本区域内的直连链路信息。该LSA仅在本区域内传播。其中，Link ID跟ADV Router写的都是该路由器的RouterID。<br>下图为1类LSA：</p>
-<h2 id="2类LSA，网络LSA。"><a href="#2类LSA，网络LSA。" class="headerlink" title="2类LSA，网络LSA。"></a>2类LSA，网络LSA。</h2><p>在广播或者非广播模式下（NBMA）由DR生成。该LSA仅在本区域内传播。2类LSA表达的意思应该是：某区域内，在广播或非广播的网段内选举了DR，于是DR在本区域范围利用2类LSA来进行通告。该LSA仅在本区域内传播。其中，该LSA的Link ID就是该DR的接口IP地址，而ADV Router则是DR的Router ID。</p>
-<h2 id="3类LSA，网络汇总LSA。"><a href="#3类LSA，网络汇总LSA。" class="headerlink" title="3类LSA，网络汇总LSA。"></a>3类LSA，网络汇总LSA。</h2><p>由区域边界路由器ABR生成，用于将一个区域内的网络通告给OSPF中的其他区域。可以认为3类LSA保存着本区域以外的所有其他区域的网络。举个例子，在多区域的环境如1-0-2这样的三个区域，含有area1和area0的ABR会把area1的网络以3类LSA的形式通告给area0，当然它也会把area0里面的网络通告给area1。那么，area1里面的网络又是如何通告到area2呢？这里就要考虑到area1那些一开始被转换成3类LSA的网络，是如何进入到area2的问题了。当原先这个3类LSA进入到area0跟area2的边界路由器时，位于这个边界的ABR就把这条包含着area1链路信息的3类LSA进行修改，修改的内容是把里面的ADV Router替换成自己的Router ID，并且维持原先的Link ID不变，然后把这条修改后的LSA通告给area2，这个就是3类LSA的工作过程。</p>
-<h2 id="4类LSA，ASBR汇总LSA。"><a href="#4类LSA，ASBR汇总LSA。" class="headerlink" title="4类LSA，ASBR汇总LSA。"></a>4类LSA，ASBR汇总LSA。</h2><p>4类LSA跟5类LSA是紧密联系在一起的，可以说4类LSA是由于5类LSA的存在而产生的。4类LSA由距离本路由器最近的ABR生成，这句话应该要这样来理解：如果路由器想要找到包含了外部路由的那台ASBR（自治系统边界路由器）的话，你应该要到达哪台ABR，这台ABR的Router ID就写在该LSA的ADV Router里面，而LSA里面的Link ID代表的是该ASBR的Router ID。</p>
-<h2 id="5类LSA，外部的LSA。"><a href="#5类LSA，外部的LSA。" class="headerlink" title="5类LSA，外部的LSA。"></a>5类LSA，外部的LSA。</h2><p>5类LSA由包含了外部路由的ASBR产生，目标是把某外部路由通告给OSPF进程的所有区域（特殊区域除外，下面会提到）。5类LSA可以穿越所有区域，意思是在跨区域通告时，该LSA的Link ID和ADV Router一直保持不变。通俗一点来说，就像是该ASBR对OSPF全网络的所有路由器说，我有这个外部路由，想去的话就来找我吧！其中，Link ID代表的是那台ASBR所引入的网络，ADV Router则是该ASBR的Router ID。<br>下图为5类LSA：</p>
-<h2 id="7类LSA"><a href="#7类LSA" class="headerlink" title="7类LSA"></a>7类LSA</h2><p>7类LSA是一种由NSSA区域中引入了外部路由的路由器生成的LSA，他仅在NSSA本区域内传播。由于NSSA区域不允许外部的路由进来从而禁止了5类LSA，那么为了能够把自己的外部路由传播出去，于是使用了7类LSA来代替5类LSA的功能。值得注意的一点是，当这种7类LSA到达NSSA跟其他区域的边界后，该边界路由器会根据这条7类LSA。生成对应的5类LSA然后继续传播给其他区域。此时，这条5类的LSA里面的Link ID跟7类LSA一样，都是该外部网络地址，而ADV Router则变成了该边界路由器的Router ID，因为这条5类LSA本来就是边界路由器产生的。这里要注意的一点是，该5类LSA里面的Forwarding Address还是保持跟之前的7类LSA的Forwarding Address一样。</p>
-<h1 id="Area-Type，区域类型"><a href="#Area-Type，区域类型" class="headerlink" title="Area Type，区域类型"></a>Area Type，区域类型</h1><p>OSPF的区域类型分为5种：Backbone area(area 0)、Standard area、Stub area、Totally stubby area、No so stubby area(NSSA)。下面来逐一介绍。</p>
-<h2 id="1、Backbone-area"><a href="#1、Backbone-area" class="headerlink" title="1、Backbone area"></a>1、Backbone area</h2><p>也叫骨干区域，其实就是area 0。根据OSPF的设计原则，area 0在OSPF网络中起着中心节点的作用，其他区域的链路信息通过area 0来进行相互传递，这也意味着所有其他区域都必须跟area 0相连。该区域支持1、2、3、4、5类LSA。</p>
-<h2 id="2、Standard-area"><a href="#2、Standard-area" class="headerlink" title="2、Standard area"></a>2、Standard area</h2><p>也叫标准区域，标准区域的意思就是在这个区域里面可以正常传递OSPF各类报文。该区域支持1、2、3、4、5类LSA。</p>
-<h2 id="3、Stub-area"><a href="#3、Stub-area" class="headerlink" title="3、Stub area"></a>3、Stub area</h2><p>也叫末节区域，所谓末节区域，意思就是该区域不接受非OSPF网络的任何外部路由（external route），它如果要到达那些外部路由的时候，只需要通过默认路由把它发出去就可以了。该区域支持1、2、3类LSA。</p>
-<h2 id="4、Totally-stubby-area"><a href="#4、Totally-stubby-area" class="headerlink" title="4、Totally stubby area"></a>4、Totally stubby area</h2><p>也叫完全末节区域，他的意思是该区域非但不接受外部路由，也不接受自己本区域以外的其他区域的链路信息。它如果要到达本区域以外的目标网络的时候，也是跟末节区域一样，直接把报文通过默认路由发出去。这里要注意的是，由于默认路由是用3类LSA发送的，所以完全末节区域虽然不允许普通的3类LSA报文，但是支持这种包含默认路由的3类LSA。该区域支持1、2类LSA，以及包含默认路由的3类LSA。</p>
-<h2 id="5、No-so-stubby-area"><a href="#5、No-so-stubby-area" class="headerlink" title="5、No so stubby area"></a>5、No so stubby area</h2><p>就是平时所说的NSSA了，这个NSSA其实是从stub区域发展而来的，它的意思是在含有stub区域的条件下，还拥有可以发送外部路由出去给其他区域的能力。该区域支持1、2、3、7类LSA。这里注意一点的是，NSSA区域还有另外一种模式，那就是是完全末节区域模式的NSSA。这个模式其实就是在完全末节区域环境下允许引入外部路由，这种区域模式支持1、2类LSA以及包含默认路由的3类LSA。</p>
-<h1 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h1><figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">area 24 stub</span><br><span class="line">area 24 stub no-summary</span><br></pre></td></tr></table></figure>
 
           
         
@@ -1303,8 +1137,8 @@
               
               
                 <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/c语言/" itemprop="url" rel="index">
-                    <span itemprop="name">c语言</span>
+                  <a href="/categories/原创精选/" itemprop="url" rel="index">
+                    <span itemprop="name">原创精选</span>
                   </a>
                 </span>
 
@@ -1431,7 +1265,7 @@
               
                 <a href="/archives/">
               
-                  <span class="site-state-item-count">7</span>
+                  <span class="site-state-item-count">6</span>
                   <span class="site-state-item-name">日志</span>
                 </a>
               </div>
@@ -1442,7 +1276,7 @@
               
               <div class="site-state-item site-state-categories">
                 <a href="/categories/index.html">
-                  <span class="site-state-item-count">4</span>
+                  <span class="site-state-item-count">5</span>
                   <span class="site-state-item-name">分类</span>
                 </a>
               </div>
@@ -1453,7 +1287,7 @@
               
               <div class="site-state-item site-state-tags">
                 <a href="/tags/index.html">
-                  <span class="site-state-item-count">12</span>
+                  <span class="site-state-item-count">14</span>
                   <span class="site-state-item-name">标签</span>
                 </a>
               </div>

@@ -1,8 +1,9 @@
 ---
 title: c语言构造函数
-categories: c语言
+categories: 原创精选
 tags:
-  - c语言
+  - c语言构造
+  - c语言析构
 ---
 说起这个属性，要从fio的vpp说起，引擎的注册函数fio_libaio_register与反注册函数fio_libaio_unregister都没有其他函数调用，而fio又没有以动态库的形式将这两个函数供别的地方使用,但是这两个函数有宏定义fio_init和fio_exit来修饰。这个两个个宏定义为：
 {% codeblock lang:c %}
