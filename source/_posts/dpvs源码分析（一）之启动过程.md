@@ -1,6 +1,6 @@
 ---
 title: dpvs源码分析（一）之启动过程
-categories: 网络转发
+categories: 原创精选 
 tags:
   - 网络转发
   - DPVS
